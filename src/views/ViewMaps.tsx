@@ -37,10 +37,10 @@ export function ViewMaps() {
               minScale={0.1}
               maxScale={8}
               centerOnInit={true}
-              wheel={{ step: 0.05, smoothStep: 0.01 }}
+              wheel={{ step: 0.1 }}
             >
-              <TransformComponent wrapperClass="w-full h-full" contentClass="w-full h-full flex items-center justify-center">
-                <img src={selectedMap.image} alt={selectedMap.name} className="max-w-none pointer-events-none" />
+              <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
+                <img src={selectedMap.image} alt={selectedMap.name} className="pointer-events-none" />
               </TransformComponent>
             </TransformWrapper>
           </div>
