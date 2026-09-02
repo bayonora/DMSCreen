@@ -64,7 +64,7 @@ export function ViewInitiative() {
           <h2 className="text-lg uppercase tracking-widest text-[#c1a063] font-light hidden sm:block">Iniciativa</h2>
           <div className="flex gap-2">
             {!isCombatActive ? (
-              <Button onClick={handleStartCombat} className="bg-[#8a211b] text-white hover:bg-[#a52a23] whitespace-nowrap">
+              <Button onClick={handleStartCombat} className="whitespace-nowrap">
                 <Play size={14} className="mr-1" /> Iniciar Combate
               </Button>
             ) : (

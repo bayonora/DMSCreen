@@ -1,7 +1,10 @@
 import React from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { useState, useRef } from "react";
 import { useStore, actions, store } from "../store/useStore";
-import { Plus, X, Download, Upload, Palette } from "lucide-react";
+import { Plus, X, Download, Upload, Palette, Edit2, Trash2 } from "lucide-react";
 import { Note } from "../types";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 
@@ -19,6 +22,7 @@ export function ViewNotes() {
   const editingNote = uiState?.draftNote || null;
   const setEditingNote = (note: Partial<Note> | null) => actions.updateUI({ draftNote: note });
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewingNote, setViewingNote] = useState<Note | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = (e: React.FormEvent) => {
@@ -115,7 +119,7 @@ export function ViewNotes() {
                   <X size={16} />
                 </button>
               </div>
-              <p className="text-sm text-gray-300 whitespace-pre-wrap flex-1 cursor-pointer line-clamp-6" onClick={() => setEditingNote(note)}>
+              <p className="text-sm text-gray-300 whitespace-pre-wrap flex-1 cursor-pointer line-clamp-6" onClick={() => setViewingNote(note)}>
                 {note.content}
               </p>
             </div>
@@ -128,6 +132,54 @@ export function ViewNotes() {
           )}
         </div>
       </div>
+
+      
+      {viewingNote && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm transition-all" onClick={() => setViewingNote(null)}>
+          <div
+            className={`${viewingNote.color || COLORS[0]} border border-[#3a302a] p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl shadow-black custom-scrollbar flex flex-col`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-6">
+               <h2 className="text-2xl text-[#c1a063] font-bold pr-4">{viewingNote.title || "Sin título"}</h2>
+               <div className="flex gap-2 shrink-0">
+                 <button onClick={() => { setEditingNote(viewingNote); setViewingNote(null); }} className="text-[#8b7355] hover:text-[#c1a063] transition-colors p-2 bg-black/20 rounded border border-transparent hover:border-[#3a302a]" title="Editar">
+                   <Edit2 size={18} />
+                 </button>
+                 <button onClick={() => { setDeleteId(viewingNote.id); setViewingNote(null); }} className="text-[#8b7355] hover:text-[#8a211b] transition-colors p-2 bg-black/20 rounded border border-transparent hover:border-[#3a302a]" title="Eliminar">
+                   <Trash2 size={18} />
+                 </button>
+                 <button onClick={() => setViewingNote(null)} className="text-[#8b7355] hover:text-white p-2 bg-black/20 rounded border border-transparent hover:border-[#3a302a]" title="Cerrar">
+                   <X size={18} />
+                 </button>
+               </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto custom-scrollbar mt-2 pr-4">
+              <div className="text-base text-gray-200 font-serif leading-relaxed opacity-90 markdown-body">
+                <Markdown 
+                  remarkPlugins={[remarkGfm, remarkBreaks]}
+                  components={{
+                    p: ({node, ...props}) => <p className="mb-4 last:mb-0" {...props} />,
+                    ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1" {...props} />,
+                    ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 space-y-1" {...props} />,
+                    li: ({node, ...props}) => <li className="pl-1" {...props} />,
+                    h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-[#c1a063] mb-4 mt-6 first:mt-0 font-sans uppercase tracking-widest" {...props} />,
+                    h2: ({node, ...props}) => <h2 className="text-xl font-bold text-[#c1a063] mb-3 mt-5 first:mt-0 font-sans uppercase tracking-widest" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-lg font-bold text-[#d4b57a] mb-3 mt-4 first:mt-0 font-sans" {...props} />,
+                    strong: ({node, ...props}) => <strong className="font-bold text-[#e6e2da]" {...props} />,
+                    em: ({node, ...props}) => <em className="italic text-[#d4b57a]" {...props} />,
+                    blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-[#c1a063] pl-4 py-1 mb-4 bg-black/20 italic" {...props} />,
+                    a: ({node, ...props}) => <a className="text-[#c1a063] hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
+                  }}
+                >
+                  {viewingNote.content}
+                </Markdown>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingNote && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-md transition-all">
