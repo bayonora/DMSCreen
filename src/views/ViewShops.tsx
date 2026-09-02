@@ -5,12 +5,14 @@ import { Button, Input, Textarea } from "../components/ui/Input";
 import { Shop, ShopItem } from "../types";
 import { Plus, Trash2, Edit2, Store as StoreIcon, EyeOff, Eye, Image as ImageIcon } from "lucide-react";
 import { compressImage, cn } from "../lib/utils";
+import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 
 export function ViewShops() {
   const { shops } = useStore();
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editShopData, setEditShopData] = useState<Shop | null>(null);
+  const [deleteShopId, setDeleteShopId] = useState<string | null>(null);
 
   const selectedShop = shops.find((s) => s.id === selectedShopId);
 
@@ -22,13 +24,11 @@ export function ViewShops() {
 
   const handleDeleteShop = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("¿Borrar esta tienda?")) {
-      actions.deleteShop(id);
-    }
+    setDeleteShopId(id);
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#161311] border border-[#3a302a] rounded-lg overflow-hidden relative">
+    <div className="flex-1 flex flex-col bg-transparent border-none rounded-none overflow-hidden relative">
       <div className="bg-[#1e1a17] px-6 py-4 border-b border-[#3a302a] flex justify-between items-center z-10 relative">
         <h2 className="text-lg uppercase tracking-widest text-[#c1a063] font-light flex items-center gap-2">
           <StoreIcon className="text-[#c1a063]" size={20} /> Tiendas
@@ -87,6 +87,13 @@ export function ViewShops() {
       )}
 
       <AddShopModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} editData={editShopData} />
+      <ConfirmDeleteModal 
+        isOpen={!!deleteShopId} 
+        onClose={() => setDeleteShopId(null)} 
+        onConfirm={() => { if (deleteShopId) actions.deleteShop(deleteShopId); setDeleteShopId(null); }}
+        title="Eliminar Tienda"
+        message="¿Estás seguro de que quieres eliminar esta tienda permanentemente?"
+      />
     </div>
   );
 }
@@ -95,6 +102,7 @@ function ShopInventory({ shop }: { shop: Shop }) {
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [editItemData, setEditItemData] = useState<ShopItem | null>(null);
   const [viewItem, setViewItem] = useState<ShopItem | null>(null);
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
   const handleEdit = (item: ShopItem, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -109,9 +117,7 @@ function ShopInventory({ shop }: { shop: Shop }) {
 
   const handleDelete = (itemId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("¿Borrar este objeto?")) {
-      actions.deleteShopItem(shop.id, itemId);
-    }
+    setDeleteItemId(itemId);
   };
 
   return (
@@ -218,6 +224,14 @@ function ShopInventory({ shop }: { shop: Shop }) {
           </div>
         )}
       </Modal>
+
+      <ConfirmDeleteModal 
+        isOpen={!!deleteItemId} 
+        onClose={() => setDeleteItemId(null)} 
+        onConfirm={() => { if (deleteItemId) actions.deleteShopItem(shop.id, deleteItemId); setDeleteItemId(null); }}
+        title="Eliminar Objeto"
+        message="¿Estás seguro de que quieres eliminar este objeto permanentemente?"
+      />
     </div>
   );
 }

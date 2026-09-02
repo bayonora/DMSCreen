@@ -41,6 +41,7 @@ export type StatusEffect = {
   id: string;
   name: string;
   description: string;
+  duration: number; // 0 for infinite
 };
 
 export type Combatant = {
@@ -72,4 +73,25 @@ export type Shop = {
   ownerName: string;
   ownerImage: string; // Base64
   items: ShopItem[];
+};
+
+export type Note = {
+  id: string;
+  title: string;
+  content: string;
+  color: string;
+};
+
+export type CustomItem = {
+  id: string;
+  name: string;
+  description?: string;
+  value?: string;
+  image?: string;
+};
+
+export type LootTable = {
+  id: string;
+  name: string;
+  items: string[];
 };

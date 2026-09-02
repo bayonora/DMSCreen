@@ -16,13 +16,13 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div 
-        className="absolute inset-0 bg-[#000000cc] backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/40 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
       
       <div 
         className={cn(
-          "relative bg-[#0f0d0c] border-2 border-[#3a302a] shadow-2xl shadow-black w-full max-w-2xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200",
+          "relative bg-[#0f0d0c] border border-[#3a302a] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.4)] w-full max-w-2xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200",
           className
         )}
       >

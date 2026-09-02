@@ -7,33 +7,58 @@ import { Play, SkipForward, Square, Plus, Shield, Heart, Trash2, Edit2, RotateCc
 import { cn, formatMod } from "../lib/utils";
 import { StatBlock } from "../components/StatBlock";
 import { motion, AnimatePresence } from "motion/react";
+import { MathInput } from "../components/MathInput";
+import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 
 export function ViewInitiative() {
-  const { combatants, graveyard, players, npcs } = useStore();
-  const [activeTurnIdx, setActiveTurnIdx] = useState<number>(-1);
-  const [isCombatActive, setIsCombatActive] = useState(false);
+  const { combatants, graveyard, players, npcs, uiState } = useStore();
+  
+  const isCombatActive = uiState?.combatActive || false;
+  const activeTurnIdx = uiState?.currentTurn || 0;
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isGraveyardOpen, setIsGraveyardOpen] = useState(false);
   const [statusModal, setStatusModal] = useState<{ open: boolean; combatantId: string; effect?: StatusEffect }>({ open: false, combatantId: "" });
   const [viewCharModal, setViewCharModal] = useState<{ open: boolean; charId: string }>({ open: false, charId: "" });
 
   const handleStartCombat = () => {
-    setIsCombatActive(true);
-    setActiveTurnIdx(0);
+    actions.updateUI({ combatActive: true, currentTurn: 0 });
   };
 
   const handleNextTurn = () => {
     if (combatants.length === 0) return;
-    setActiveTurnIdx((prev) => (prev + 1) % combatants.length);
+    
+    // Decrementar estados del combatiente cuyo turno termina
+    const currentCombatant = combatants[activeTurnIdx];
+    if (currentCombatant) {
+      const updatedStatuses = currentCombatant.statuses.reduce((acc, s) => {
+        if (s.duration === 0) {
+          // Infinito
+          acc.push(s);
+        } else if (s.duration > 0) {
+          const newDuration = s.duration - 1;
+          if (newDuration > 0) {
+            acc.push({ ...s, duration: newDuration });
+          }
+        } else {
+          // Sin duración (legacy)
+          acc.push(s);
+        }
+        return acc;
+      }, [] as StatusEffect[]);
+      
+      actions.updateCombatant(currentCombatant.id, { statuses: updatedStatuses });
+    }
+
+    actions.updateUI({ currentTurn: (activeTurnIdx + 1) % combatants.length });
   };
 
   const handleEndCombat = () => {
-    setIsCombatActive(false);
-    setActiveTurnIdx(-1);
+    actions.updateUI({ combatActive: false, currentTurn: 0 });
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#161311] border border-[#3a302a] rounded-lg overflow-hidden">
+    <div className="flex-1 flex flex-col bg-transparent border-none rounded-none overflow-hidden">
       <div className="bg-[#1e1a17] px-6 py-4 border-b border-[#3a302a] flex justify-between items-center">
         <div className="flex items-center gap-4">
           <h2 className="text-lg uppercase tracking-widest text-[#c1a063] font-light hidden sm:block">Iniciativa</h2>
@@ -55,8 +80,8 @@ export function ViewInitiative() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={() => setIsGraveyardOpen(true)} className="text-[#c1a063] flex items-center p-0 hover:bg-transparent hover:underline">
-            <span className="mr-1">💀</span> Cementerio ({graveyard.length})
+          <Button variant="secondary" onClick={() => setIsGraveyardOpen(true)}>
+            <span className="mr-2">💀</span> Cementerio ({graveyard.length})
           </Button>
           <Button onClick={() => setIsAddModalOpen(true)}>
             <Plus size={14} className="mr-1" /> Añadir
@@ -65,13 +90,6 @@ export function ViewInitiative() {
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <div className="flex items-center px-6 py-2 border-b border-[#2a2420] text-[10px] uppercase tracking-wider text-[#c1a063] opacity-60">
-          <div className="w-16">Inic.</div>
-          <div className="flex-1">Personaje y Estados</div>
-          <div className="w-48 hidden sm:block">Salud (HP)</div>
-          <div className="w-20 hidden md:block">Armadura</div>
-          <div className="w-16">Acciones</div>
-        </div>
 
         <div className="flex flex-col">
           <AnimatePresence>
@@ -93,76 +111,79 @@ export function ViewInitiative() {
                     isActive ? "bg-[#2a2420] relative shadow-[inset_4px_0_0_#c1a063]" : "hover:bg-[#1e1a17]"
                   )}
                 >
-                  <div className={cn("w-16 font-bold text-lg", isActive ? "" : "opacity-50")}>
-                    <Input 
+                  <div className={cn("w-16 flex items-center justify-center font-bold", isActive ? "text-[#c1a063]" : "text-[#f5f2ed] opacity-50")}>
+                    <input 
                       type="number" 
                       value={c.initiative} 
                       onChange={(e) => actions.updateCombatant(c.id, { initiative: Number(e.target.value) })}
-                      className="w-12 text-center text-lg h-10 px-0 font-bold border-none bg-transparent focus:bg-[#3a302a] -ml-2"
+                      className="w-12 text-center text-2xl h-10 px-0 font-bold border-none bg-transparent focus:bg-[#3a302a] rounded-sm outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                   
-                  <div className="flex-1 flex flex-col min-w-0 pr-4 gap-1">
-                    <div className="flex items-center flex-wrap gap-2">
-                      <button 
-                        onClick={() => setViewCharModal({ open: true, charId: c.characterId })}
-                        className={cn("font-bold text-lg text-left truncate transition-colors", isActive ? "text-[#f5f2ed]" : "text-[#f5f2ed] opacity-80", "hover:text-[#c1a063]")}
-                      >
-                        {char.name}
-                      </button>
-                      
-                      <div className="flex flex-wrap gap-1 items-center ml-2">
-                        {c.statuses.map(s => (
-                          <button 
-                            key={s.id}
-                            onClick={() => setStatusModal({ open: true, combatantId: c.id, effect: s })}
-                            className="px-2 py-0.5 bg-[#8a211b]/20 text-[#ff8f8a] text-[11px] uppercase tracking-wider rounded-sm border border-[#8a211b]/50 cursor-pointer hover:bg-[#8a211b]/40 truncate max-w-[150px] font-bold"
-                            title={s.description}
-                          >
-                            {s.name}
-                          </button>
-                        ))}
+                  <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between min-w-0 pr-4 gap-4">
+                    <div className="flex-1 flex flex-col min-w-0 gap-1">
+                      <div className="flex items-center flex-wrap gap-2">
                         <button 
-                          onClick={() => setStatusModal({ open: true, combatantId: c.id })}
-                          className="w-5 h-5 rounded-sm border border-[#3a302a] flex items-center justify-center text-[12px] opacity-40 hover:opacity-100 hover:text-[#c1a063] hover:border-[#c1a063]"
-                          title="Añadir Estado"
+                          onClick={() => setViewCharModal({ open: true, charId: c.characterId })}
+                          className={cn("font-bold text-lg text-left truncate transition-colors", isActive ? "text-[#f5f2ed]" : "text-[#f5f2ed] opacity-80", "hover:text-[#c1a063]")}
                         >
-                          +
+                          {char.name}
                         </button>
+                        
+                        <div className="flex flex-wrap gap-1 items-center ml-2">
+                          {c.statuses.map(s => (
+                            <button 
+                              key={s.id}
+                              onClick={() => setStatusModal({ open: true, combatantId: c.id, effect: s })}
+                              className="px-2 py-0.5 bg-[#8a211b]/20 text-[#ff8f8a] text-[11px] uppercase tracking-wider rounded-sm border border-[#8a211b]/50 cursor-pointer hover:bg-[#8a211b]/40 truncate max-w-[150px] font-bold"
+                              title={s.description}
+                            >
+                              {s.name}{s.duration ? ` (${s.duration})` : ""}
+                            </button>
+                          ))}
+                          <button 
+                            onClick={() => setStatusModal({ open: true, combatantId: c.id })}
+                            className="w-5 h-5 rounded-sm border border-[#3a302a] flex items-center justify-center text-[12px] opacity-40 hover:opacity-100 hover:text-[#c1a063] hover:border-[#c1a063]"
+                            title="Añadir Estado"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <span className={cn("text-[10px] uppercase font-bold", isActive ? "opacity-100 text-[#c1a063]" : "opacity-30", char.type === "npc" && !isActive ? "text-red-400" : "")}>
+                        {isActive ? "▶ TURNO ACTIVO" : (char.type === "player" ? "Jugador" : "NPC")}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-6 shrink-0 mt-2 md:mt-0 justify-start">
+                      <div className="w-48 flex flex-col justify-center items-end pr-4">
+                        <div className="flex items-center gap-1 text-sm font-mono mb-1 justify-end w-full">
+                            <Heart size={14} className={cn("mr-auto shrink-0", isActive ? "text-red-500" : "text-[#8a211b]")} />
+                            <MathInput 
+                              value={c.hpCurrent}
+                              onValueChange={(val) => actions.updateCombatant(c.id, { hpCurrent: val })}
+                              className="w-20 h-6 p-0 text-right border-none bg-transparent text-[#e6e2da] text-xl font-bold focus:bg-[#3a302a] rounded-sm"
+                            />
+                            <span className="opacity-50 text-base select-none shrink-0">/ {char.hpMax}</span>
+                        </div>
+                        <div className="w-32 h-1.5 bg-[#1a1614] rounded-full relative overflow-hidden border border-[#3a302a]">
+                          <div 
+                            className={cn("absolute inset-0 transition-all duration-300", char.type === "player" ? "bg-green-600" : "bg-red-800")} 
+                            style={{ width: `${Math.max(0, Math.min(100, (c.hpCurrent / char.hpMax) * 100))}%` }} 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="w-16 flex items-center justify-center">
+                        <div className="flex items-center justify-center p-1 relative" title="Clase de Armadura">
+                          <Shield size={36} className={cn("opacity-80", isActive ? "text-[#c1a063]" : "text-[#4a3e35]")} />
+                          <span className="absolute text-[13px] font-bold mt-[-2px]">{char.ac}</span>
+                        </div>
                       </div>
                     </div>
-                    <span className={cn("text-[10px] uppercase font-bold", isActive ? "opacity-100 text-[#c1a063]" : "opacity-30", char.type === "npc" && !isActive ? "text-red-400" : "")}>
-                      {isActive ? "▶ TURNO ACTIVO" : (char.type === "player" ? "Jugador" : "NPC")}
-                    </span>
                   </div>
 
-                  <div className="w-48 hidden sm:flex flex-col justify-center">
-                    <div className="flex justify-between items-center text-sm font-mono mb-1 w-32">
-                        <Heart size={16} className={cn("mr-2", isActive ? "text-red-500" : "text-[#8a211b]")} />
-                       <Input 
-                          type="number" 
-                          value={c.hpCurrent}
-                          onChange={(e) => actions.updateCombatant(c.id, { hpCurrent: Number(e.target.value) })}
-                          className="w-12 h-6 p-0 text-center border-none bg-transparent text-[#e6e2da] text-lg font-bold focus:bg-[#3a302a]"
-                        />
-                        <span className="opacity-50 text-base">/ {char.hpMax}</span>
-                    </div>
-                    <div className="w-32 h-2 bg-[#1a1614] rounded-full relative overflow-hidden border border-[#3a302a]">
-                      <div 
-                        className={cn("absolute inset-0 transition-all", char.type === "player" ? "bg-green-600" : "bg-red-800")} 
-                        style={{ width: `${Math.max(0, Math.min(100, (c.hpCurrent / char.hpMax) * 100))}%` }} 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="w-20 hidden md:flex items-center gap-2">
-                    <div className="flex items-center justify-center p-1 relative" title="Clase de Armadura">
-                      <Shield size={28} className={cn("opacity-80", isActive ? "text-[#c1a063]" : "text-[#3a302a]")} />
-                      <span className="absolute text-[11px] font-bold mt-[-2px]">{char.ac}</span>
-                    </div>
-                  </div>
-
-                  <div className="w-16 flex justify-end gap-2 items-center">
+                  <div className="w-12 shrink-0 flex justify-end items-center">
                     <button 
                       onClick={() => actions.killCombatant(c.id)}
                       className="p-2 text-[#3a302a] hover:text-[#8a211b] transition-colors"
@@ -261,23 +282,56 @@ function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =
   );
 }
 
+const PREDEFINED_STATUSES = [
+  { name: "Agarrado", description: "La velocidad de una criatura agarrada es 0 y no puede aumentar por encima de ese valor." },
+  { name: "Apresado", description: "La velocidad de una criatura apresada es 0 y no puede aumentar por encima de este valor." },
+  { name: "Asustado", description: "Una criatura asustada tiene desventaja en las pruebas de característica y tiradas de ataque mientras pueda ver a la fuente de su miedo." },
+  { name: "Aturdido", description: "Una criatura aturdida está incapacitada, no puede moverse y solo es capaz de hablar con voz entrecortada." },
+  { name: "Cegado", description: "Una criatura cegada no puede ver y falla automáticamente todas las pruebas de característica que requieran vista." },
+  { name: "Concentración", description: "Cada vez que sufras daño mientras te concentras en un conjuro tendrás que hacer una tirada de salvación de Constitución. La CD será de 10 o la mitad del daño, lo mayor." },
+  { name: "Dormido", description: "Permaneces inconsciente hasta que el conjuro termina, reciba daño o alguien le zarandee para que despierte." },
+  { name: "Derribado", description: "Solo podrá moverse arrastrándose o levantarse. Desventaja en tiradas de ataque. Ataques en su contra tienen ventaja a 5 pies o menos, y desventaja a más distancia." },
+  { name: "Envenenado", description: "Una criatura envenenada tiene desventaja en las tiradas de ataque y las pruebas de característica." },
+  { name: "Hechizado", description: "No puede atacar ni elegir como objetivo de efectos dañinos/mágicos a quien la hechizó. Quien la hechizó tiene ventaja en pruebas de interacción social con ella." },
+  { name: "Incapacitado", description: "Una criatura incapacitada no puede llevar a cabo acciones ni reacciones." },
+  { name: "Inconsciente", description: "Incapacitada, no puede moverse/hablar, no es consciente. Suelta todo y cae derribada. Falla salvaciones de FUE y DES. Ataques en contra tienen ventaja y son críticos si están a 5 pies." },
+  { name: "Invisible", description: "Imposible verla sin magia/sentidos. Para esconderse, se considera en zona muy oscura. Ataques en contra tienen desventaja, y sus ataques tienen ventaja." },
+  { name: "Muriendo", description: "Si el daño que no te mata te reduce a 0 puntos de golpe, caes inconsciente y comienzas a morir." },
+  { name: "Paralizado", description: "Incapacitada, no puede moverse/hablar. Falla salvaciones FUE/DES. Ataques en contra tienen ventaja y son críticos si están a 5 pies." }
+];
+
 function StatusModal({ isOpen, onClose, combatantId, effect }: { isOpen: boolean, onClose: () => void, combatantId: string, effect?: StatusEffect }) {
   const { combatants } = useStore();
+  const [name, setName] = useState(effect?.name || "");
+  const [desc, setDesc] = useState(effect?.description || "");
+  const [duration, setDuration] = useState(effect?.duration !== undefined ? String(effect.duration) : "0");
+
+  // Update states if effect changes (when modal opens/closes with different effect)
+  React.useEffect(() => {
+    if (isOpen) {
+      setName(effect?.name || "");
+      setDesc(effect?.description || "");
+      setDuration(effect?.duration !== undefined ? String(effect.duration) : "0");
+    }
+  }, [isOpen, effect]);
   
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const desc = formData.get("desc") as string;
     
     const c = combatants.find(x => x.id === combatantId);
     if (!c) return;
 
+    const parsedDuration = Number(duration);
+    if (isNaN(parsedDuration) || parsedDuration < 0) {
+      alert("La duración debe ser un número válido mayor o igual a 0.");
+      return;
+    }
+
     let newStatuses = [...c.statuses];
     if (effect) {
-      newStatuses = newStatuses.map(s => s.id === effect.id ? { ...s, name, description: desc } : s);
+      newStatuses = newStatuses.map(s => s.id === effect.id ? { ...s, name, description: desc, duration: parsedDuration } : s);
     } else {
-      newStatuses.push({ id: Math.random().toString(), name, description: desc });
+      newStatuses.push({ id: Math.random().toString(), name, description: desc, duration: parsedDuration });
     }
     
     actions.updateCombatant(combatantId, { statuses: newStatuses });
@@ -293,26 +347,66 @@ function StatusModal({ isOpen, onClose, combatantId, effect }: { isOpen: boolean
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={effect ? "Editar Estado" : "Nuevo Estado"}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Input label="Nombre del Estado" name="name" required defaultValue={effect?.name} />
-        <Textarea label="Descripción" name="desc" defaultValue={effect?.description} />
-        
-        <div className="flex justify-between mt-4 pt-4 border-t border-[#3a302a]">
-          {effect ? (
-            <Button type="button" variant="danger" onClick={handleDelete}>Borrar Estado</Button>
-          ) : <div></div>}
-          <div className="flex gap-2">
-            <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-            <Button type="submit">Guardar</Button>
+      <div className="flex flex-col md:flex-row gap-6 max-h-[70vh]">
+        {!effect && (
+          <div className="w-full md:w-1/3 flex flex-col gap-2 border-b md:border-b-0 md:border-r border-[#3a302a] pb-4 md:pb-0 md:pr-4 overflow-y-auto custom-scrollbar">
+            <h3 className="text-[10px] uppercase tracking-widest text-[#c1a063] font-bold mb-2">Predefinidos (D&D 5e)</h3>
+            {PREDEFINED_STATUSES.map((status) => (
+              <button
+                key={status.name}
+                type="button"
+                onClick={() => {
+                  setName(status.name);
+                  setDesc(status.description);
+                }}
+                className="text-left text-sm px-3 py-2 bg-[#1a1614] border border-[#3a302a] text-[#8b7355] hover:text-[#c1a063] hover:border-[#c1a063] transition-colors"
+              >
+                {status.name}
+              </button>
+            ))}
           </div>
-        </div>
-      </form>
+        )}
+        
+        <form onSubmit={handleSubmit} className={cn("flex flex-col gap-4", effect ? "w-full" : "w-full md:w-2/3")}>
+          <Input 
+            label="Nombre del Estado" 
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required 
+          />
+          <Textarea 
+            label="Descripción" 
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            className="flex-1"
+          />
+          <Input 
+            label="Duración (Turnos, 0 = Indefinido)" 
+            type="number"
+            min="0"
+            required
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+          />
+          
+          <div className="flex justify-between mt-auto pt-4 border-t border-[#3a302a]">
+            {effect ? (
+              <Button type="button" variant="danger" onClick={handleDelete}>Borrar Estado</Button>
+            ) : <div></div>}
+            <div className="flex gap-2">
+              <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+              <Button type="submit">Guardar</Button>
+            </div>
+          </div>
+        </form>
+      </div>
     </Modal>
   );
 }
 
 function GraveyardModal({ isOpen, onClose, onViewChar }: { isOpen: boolean, onClose: () => void, onViewChar: (id: string) => void }) {
   const { graveyard } = useStore();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Cementerio (Historial)">
@@ -332,7 +426,7 @@ function GraveyardModal({ isOpen, onClose, onViewChar }: { isOpen: boolean, onCl
                 <Button variant="secondary" onClick={() => actions.reviveCombatant(c.id)} title="Devolver a Iniciativa">
                   <RotateCcw size={14} />
                 </Button>
-                <Button variant="danger" onClick={() => actions.deleteFromGraveyard(c.id)} title="Borrar del historial">
+                <Button variant="danger" onClick={() => setDeleteId(c.id)} title="Borrar del historial">
                   <Trash2 size={14} />
                 </Button>
               </div>
@@ -341,6 +435,13 @@ function GraveyardModal({ isOpen, onClose, onViewChar }: { isOpen: boolean, onCl
         })}
         {graveyard.length === 0 && <p className="text-[#e6e2da] opacity-50 text-center py-4 font-serif">El cementerio está vacío.</p>}
       </div>
+      <ConfirmDeleteModal 
+        isOpen={!!deleteId} 
+        onClose={() => setDeleteId(null)} 
+        onConfirm={() => { if (deleteId) actions.deleteFromGraveyard(deleteId); }}
+        title="Eliminar Permanente"
+        message="¿Estás seguro de que quieres eliminar a este personaje del cementerio de forma permanente?"
+      />
     </Modal>
   );
 }

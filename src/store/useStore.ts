@@ -1,10 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
-import { Player, NPC, Character, Combatant, MapData, Shop, ShopItem } from "../types";
+import { Player, NPC, Character, Combatant, MapData, Shop, ShopItem, Note, CustomItem, LootTable } from "../types";
 import { v4 as uuidv4 } from "uuid";
 
 // We use a custom hook instead of Zustand to keep it simple and directly tied to localStorage events if needed.
 // But a global singleton is better for React so all components share state.
 // We'll create a simple pub-sub store.
+
+type UIState = {
+  combatActive: boolean;
+  currentTurn: number;
+  round: number;
+  editingNoteId: string | "new" | null;
+  draftNote: Partial<Note> | null;
+  // Let's also keep track of selected tabs in nested views if needed, 
+  // but just preserving the note editor and combat state is the most requested.
+};
 
 type StoreState = {
   players: Player[];
@@ -13,6 +23,10 @@ type StoreState = {
   graveyard: Combatant[];
   maps: MapData[];
   shops: Shop[];
+  notes: Note[];
+  customItems: CustomItem[];
+  lootTables: LootTable[];
+  uiState: UIState;
 };
 
 const DEFAULT_STATE: StoreState = {
@@ -22,6 +36,16 @@ const DEFAULT_STATE: StoreState = {
   graveyard: [],
   maps: [],
   shops: [],
+  notes: [],
+  customItems: [],
+  lootTables: [],
+  uiState: {
+    combatActive: false,
+    currentTurn: 0,
+    round: 1,
+    editingNoteId: null,
+    draftNote: null,
+  }
 };
 
 const STORE_KEY = "dnd_dm_screen_data";
@@ -34,7 +58,11 @@ class Store {
     const saved = localStorage.getItem(STORE_KEY);
     if (saved) {
       try {
-        this.state = JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        this.state = { ...DEFAULT_STATE, ...parsed };
+        if (!this.state.uiState) {
+          this.state.uiState = DEFAULT_STATE.uiState;
+        }
       } catch {
         this.state = DEFAULT_STATE;
       }
@@ -101,6 +129,9 @@ export function useStore() {
 }
 
 export const actions = {
+  updateUI: (updates: Partial<UIState>) => {
+    store.setState({ uiState: { ...store.getState().uiState, ...updates } });
+  },
   // Party & NPCs
   addPlayer: (p: Omit<Player, "id" | "type">) => {
     store.setState({ players: [...store.getState().players, { ...p, id: uuidv4(), type: "player" }] });
@@ -221,5 +252,44 @@ export const actions = {
           : s
       ),
     });
+  },
+
+  // Notes
+  addNote: (note: Omit<Note, "id">) => {
+    store.setState({ notes: [...(store.getState().notes || []), { ...note, id: uuidv4() }] });
+  },
+  updateNote: (id: string, note: Partial<Note>) => {
+    store.setState({
+      notes: (store.getState().notes || []).map((n) => (n.id === id ? { ...n, ...note } : n)),
+    });
+  },
+  deleteNote: (id: string) => {
+    store.setState({ notes: (store.getState().notes || []).filter((n) => n.id !== id) });
+  },
+  
+  // Custom Items
+  addCustomItem: (item: Omit<CustomItem, "id">) => {
+    store.setState({ customItems: [...(store.getState().customItems || []), { ...item, id: uuidv4() }] });
+  },
+  updateCustomItem: (id: string, item: Partial<CustomItem>) => {
+    store.setState({
+      customItems: (store.getState().customItems || []).map((i) => (i.id === id ? { ...i, ...item } : i)),
+    });
+  },
+  deleteCustomItem: (id: string) => {
+    store.setState({ customItems: (store.getState().customItems || []).filter((i) => i.id !== id) });
+  },
+
+  // Loot Tables
+  addLootTable: (table: Omit<LootTable, "id">) => {
+    store.setState({ lootTables: [...(store.getState().lootTables || []), { ...table, id: uuidv4() }] });
+  },
+  updateLootTable: (id: string, table: Partial<LootTable>) => {
+    store.setState({
+      lootTables: (store.getState().lootTables || []).map((t) => (t.id === id ? { ...t, ...table } : t)),
+    });
+  },
+  deleteLootTable: (id: string) => {
+    store.setState({ lootTables: (store.getState().lootTables || []).filter((t) => t.id !== id) });
   },
 };

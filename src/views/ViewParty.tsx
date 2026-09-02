@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useStore, actions, store } from "../store/useStore";
 import { StatBlock } from "../components/StatBlock";
 import { Modal } from "../components/ui/Modal";
@@ -6,12 +6,14 @@ import { Input, Button, Textarea } from "../components/ui/Input";
 import { Character, Player, NPC } from "../types";
 import { Plus, Download, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 
 export function ViewParty() {
   const { players, npcs } = useStore();
   const [tab, setTab] = useState<"players" | "npcs">("players");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChar, setEditingChar] = useState<Character | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const openNew = () => {
     setEditingChar(null);
@@ -32,10 +34,14 @@ export function ViewParty() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("¿Estás seguro de que quieres borrar este personaje?")) {
-      if (tab === "players") actions.deletePlayer(id);
-      else actions.deleteNPC(id);
-    }
+    setDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteId) return;
+    if (tab === "players") actions.deletePlayer(deleteId);
+    else actions.deleteNPC(deleteId);
+    setDeleteId(null);
   };
 
   const importData = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +59,7 @@ export function ViewParty() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#161311] border border-[#3a302a] rounded-lg overflow-hidden">
+    <div className="flex-1 flex flex-col bg-transparent border-none rounded-none overflow-hidden">
       <div className="bg-[#1e1a17] px-6 py-4 border-b border-[#3a302a] flex justify-between items-center">
         <div className="flex gap-2">
           <Button variant={tab === "players" ? "primary" : "secondary"} onClick={() => setTab("players")}>
@@ -64,7 +70,7 @@ export function ViewParty() {
           </Button>
         </div>
         <div className="flex gap-2">
-          <label className="cursor-pointer px-4 py-1.5 bg-transparent border border-[#c1a063] text-[#c1a063] text-xs uppercase tracking-tighter hover:bg-[#c1a063] hover:text-[#0f0d0c] inline-flex items-center justify-center transition-colors">
+          <label className="cursor-pointer px-4 py-2 bg-[#1a1614] border border-[#3a302a] text-[#8b7355] text-xs uppercase tracking-widest hover:bg-[#2a2420] hover:border-[#c1a063] hover:text-[#c1a063] inline-flex items-center justify-center transition-all shadow-sm rounded-none">
             <Upload size={14} className="mr-2" /> Importar
             <input type="file" accept=".json" className="hidden" onChange={importData} />
           </label>
@@ -79,14 +85,13 @@ export function ViewParty() {
 
       <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
         <div className="flex flex-wrap gap-6 items-start justify-center">
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {tab === "players" && players.map((p) => (
               <motion.div
                 key={p.id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
                 <StatBlock character={p} onEdit={handleEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} />
@@ -95,10 +100,9 @@ export function ViewParty() {
             {tab === "npcs" && npcs.map((n) => (
               <motion.div
                 key={n.id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
                 <StatBlock character={n} onEdit={handleEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} />
@@ -121,6 +125,13 @@ export function ViewParty() {
         initialData={editingChar}
         defaultType={tab}
       />
+      <ConfirmDeleteModal 
+        isOpen={!!deleteId} 
+        onClose={() => setDeleteId(null)} 
+        onConfirm={confirmDelete}
+        title="Eliminar Personaje"
+        message="¿Estás seguro de que quieres eliminar a este personaje de forma permanente?"
+      />
     </div>
   );
 }
@@ -129,6 +140,12 @@ function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen:
   const isEditing = !!initialData;
   const [type, setType] = useState<"player" | "npc">(initialData?.type || (defaultType === "players" ? "player" : "npc"));
   
+  useEffect(() => {
+    if (isOpen) {
+      setType(initialData?.type || (defaultType === "players" ? "player" : "npc"));
+    }
+  }, [isOpen, initialData, defaultType]);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -209,11 +226,11 @@ function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen:
 
         {type === "npc" && (
           <>
-            <Input label="Habilidades" name="skills" defaultValue={(initialData as NPC)?.skills} />
-            <Input label="Sentidos" name="senses" defaultValue={(initialData as NPC)?.senses} />
-            <Input label="Idiomas" name="languages" defaultValue={(initialData as NPC)?.languages} />
-            <Textarea label="Rasgos Especiales" name="specialTraits" defaultValue={(initialData as NPC)?.specialTraits} />
-            <Textarea label="Acciones (Ataques, Hechizos)" name="actions" defaultValue={(initialData as NPC)?.actions} />
+            <Input label="Habilidades" name="skills" defaultValue={(initialData as NPC)?.skills} placeholder="ej. Percepción +2, Sigilo +4" />
+            <Input label="Sentidos" name="senses" defaultValue={(initialData as NPC)?.senses} placeholder="ej. Visión en la oscuridad 120 pies, Percepción pasiva 12" />
+            <Input label="Idiomas" name="languages" defaultValue={(initialData as NPC)?.languages} placeholder="ej. Común, élfico" />
+            <Textarea label="Rasgos Especiales" name="specialTraits" defaultValue={(initialData as NPC)?.specialTraits} placeholder="ej. Sensibilidad a la Luz Solar: El drow tiene desventaja en las tiradas..." />
+            <Textarea label="Acciones (Ataques, Hechizos)" name="actions" defaultValue={(initialData as NPC)?.actions} placeholder="ej. Espada corta. Ataque con arma cuerpo a cuerpo: +4 a impactar, alcance 5 pies..." />
           </>
         )}
 

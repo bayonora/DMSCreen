@@ -1,0 +1,196 @@
+import React from "react";
+import { useState, useRef } from "react";
+import { useStore, actions, store } from "../store/useStore";
+import { Plus, X, Download, Upload, Palette } from "lucide-react";
+import { Note } from "../types";
+import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
+
+const COLORS = [
+  "bg-[#2a2420]", // Default Dark
+  "bg-[#3a2020]", // Dark Red
+  "bg-[#203a20]", // Dark Green
+  "bg-[#202a3a]", // Dark Blue
+  "bg-[#3a3520]", // Dark Yellow/Gold
+  "bg-[#3a2035]", // Dark Purple
+];
+
+export function ViewNotes() {
+  const { notes, uiState } = useStore();
+  const editingNote = uiState?.draftNote || null;
+  const setEditingNote = (note: Partial<Note> | null) => actions.updateUI({ draftNote: note });
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingNote) return;
+
+    if (editingNote.id) {
+      actions.updateNote(editingNote.id, editingNote as Note);
+    } else {
+      actions.addNote(editingNote as Note);
+    }
+    setEditingNote(null);
+  };
+
+  const handleExport = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes || []));
+    const downloadAnchorNode = document.createElement("a");
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "dm_screen_notes.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const imported = JSON.parse(event.target?.result as string) as Note[];
+        if (Array.isArray(imported)) {
+          store.setState({ notes: imported });
+        }
+      } catch (err) {
+        alert("Archivo de notas inválido.");
+      }
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  return (
+    <div className="h-full flex flex-col p-6 animate-in fade-in duration-300">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl text-[#c1a063] font-light tracking-widest uppercase">Notas</h2>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors"
+            title="Importar Notas"
+          >
+            <Upload size={18} />
+          </button>
+          <button
+            onClick={handleExport}
+            className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors"
+            title="Exportar Notas"
+          >
+            <Download size={18} />
+          </button>
+          <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImport} />
+          
+          <button
+            onClick={() => setEditingNote({ id: "", title: "", content: "", color: COLORS[0] })}
+            className="flex items-center space-x-2 px-4 py-2 bg-[#c1a063] text-black hover:bg-white transition-colors uppercase tracking-wider text-sm font-semibold"
+          >
+            <Plus size={16} />
+            <span>Nueva Nota</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {(notes || []).map((note) => (
+            <div
+              key={note.id}
+              className={`${note.color || COLORS[0]} border border-[#3a302a] p-4 flex flex-col shadow-lg hover:border-[#c1a063] transition-colors group relative`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-lg text-[#c1a063] font-bold truncate pr-6">{note.title || "Sin título"}</h3>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteId(note.id);
+                  }}
+                  className="absolute top-4 right-4 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <p className="text-sm text-gray-300 whitespace-pre-wrap flex-1 cursor-pointer line-clamp-6" onClick={() => setEditingNote(note)}>
+                {note.content}
+              </p>
+            </div>
+          ))}
+          {(!notes || notes.length === 0) && (
+            <div className="col-span-full flex flex-col items-center justify-center h-64 text-[#8b7355] border-2 border-dashed border-[#3a302a]">
+              <p>No hay notas guardadas.</p>
+              <p className="text-sm mt-2">Usa "Nueva Nota" para crear un recordatorio o tarjeta.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {editingNote && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-md transition-all">
+          <form
+            onSubmit={handleSave}
+            className={`${editingNote.color || COLORS[0]} border border-[#3a302a] rounded-lg p-6 max-w-lg w-full relative shadow-[0_8px_30px_rgb(0,0,0,0.4)] flex flex-col`}
+          >
+            <button
+              type="button"
+              onClick={() => setEditingNote(null)}
+              className="absolute top-4 right-4 text-[#8b7355] hover:text-white"
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-xl text-[#c1a063] tracking-widest uppercase mb-4 font-light">
+              {editingNote.id ? "Editar Nota" : "Nueva Nota"}
+            </h2>
+
+            <input
+              type="text"
+              placeholder="Título de la nota"
+              value={editingNote.title}
+              onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
+              className="bg-black/50 border border-[#3a302a] p-2 text-white mb-4 focus:border-[#c1a063] outline-none"
+            />
+            
+            <textarea
+              placeholder="Escribe tu nota aquí..."
+              value={editingNote.content}
+              onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
+              className="bg-black/50 border border-[#3a302a] p-2 text-white mb-4 focus:border-[#c1a063] outline-none h-48 resize-none"
+              required
+            />
+
+            <div className="flex items-center mb-6 space-x-2">
+              <Palette size={16} className="text-[#8b7355]" />
+              <div className="flex space-x-2">
+                {COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setEditingNote({ ...editingNote, color: c })}
+                    className={`w-6 h-6 rounded-full border-2 ${editingNote.color === c ? "border-white" : "border-transparent"} ${c}`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="px-6 py-2 bg-[#c1a063] text-black font-bold uppercase tracking-widest hover:bg-white transition-colors"
+              >
+                Guardar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={() => deleteId && actions.deleteNote(deleteId)}
+        title="Eliminar Nota"
+        message="¿Estás seguro de que quieres eliminar esta nota de tu panel?"
+      />
+    </div>
+  );
+}

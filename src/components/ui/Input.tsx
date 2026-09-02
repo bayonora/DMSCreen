@@ -21,7 +21,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           ref={ref}
           className={cn(
-            "flex h-10 w-full bg-[#1e1a17] border border-[#3a302a] px-3 py-2 text-sm text-[#f5f2ed] placeholder-opacity-50 placeholder-white focus:outline-none focus:border-[#c1a063] disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-10 w-full bg-[#1e1a17] border border-[#3a302a] px-3 py-2 text-sm text-[#f5f2ed] placeholder:text-[#8b7355] placeholder:italic focus:outline-none focus:border-[#c1a063] disabled:cursor-not-allowed disabled:opacity-50",
             className
           )}
           {...props}
@@ -48,7 +48,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
           id={inputId}
           ref={ref}
           className={cn(
-            "flex min-h-[80px] w-full bg-[#1e1a17] border border-[#3a302a] px-3 py-2 text-sm text-[#f5f2ed] placeholder-opacity-50 placeholder-white focus:outline-none focus:border-[#c1a063] disabled:cursor-not-allowed disabled:opacity-50 resize-y",
+            "flex min-h-[80px] w-full bg-[#1e1a17] border border-[#3a302a] px-3 py-2 text-sm text-[#f5f2ed] placeholder:text-[#8b7355] placeholder:italic focus:outline-none focus:border-[#c1a063] disabled:cursor-not-allowed disabled:opacity-50 resize-y",
             className
           )}
           {...props}
@@ -65,12 +65,12 @@ export const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttrib
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none text-xs uppercase tracking-tighter cursor-pointer",
+          "inline-flex items-center justify-center transition-all focus:outline-none disabled:opacity-50 disabled:pointer-events-none text-xs uppercase tracking-widest cursor-pointer shadow-sm rounded-none border",
           {
-            "bg-[#c1a063] text-[#0f0d0c] hover:bg-[#d4b57a] px-4 py-1.5 font-bold": variant === "primary",
-            "bg-transparent border border-[#c1a063] text-[#c1a063] hover:bg-[#c1a063] hover:text-[#0f0d0c] px-4 py-1.5": variant === "secondary",
-            "bg-[#8a211b] text-white hover:bg-[#a52a23] px-3 py-1 font-bold": variant === "danger",
-            "hover:bg-[#3a302a] text-[#c1a063] px-4 py-1.5": variant === "ghost",
+            "bg-[#c1a063] border-[#c1a063] text-[#0f0d0c] hover:bg-[#d4b57a] px-4 py-2 font-bold": variant === "primary",
+            "bg-[#1a1614] border-[#3a302a] text-[#8b7355] hover:text-[#c1a063] hover:border-[#c1a063] hover:bg-[#2a2420] px-4 py-2": variant === "secondary",
+            "bg-[#8a211b] border-[#8a211b] text-white hover:bg-[#a52a23] hover:border-[#a52a23] px-4 py-2 font-bold": variant === "danger",
+            "bg-transparent border-transparent text-[#8b7355] hover:bg-[#1a1614] hover:text-[#c1a063] hover:border-[#3a302a] px-4 py-2 shadow-none": variant === "ghost",
           },
           className
         )}

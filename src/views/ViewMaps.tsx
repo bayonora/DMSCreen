@@ -5,16 +5,18 @@ import { Button, Input } from "../components/ui/Input";
 import { compressImage } from "../lib/utils";
 import { Plus, Trash2, Maximize2, Image as ImageIcon } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 
 export function ViewMaps() {
   const { maps } = useStore();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const selectedMap = maps.find((m) => m.id === selectedMapId);
 
   return (
-    <div className="flex-1 flex flex-col bg-[#161311] border border-[#3a302a] rounded-lg overflow-hidden">
+    <div className="flex-1 flex flex-col bg-transparent border-none rounded-none overflow-hidden">
       <div className="bg-[#1e1a17] px-6 py-4 border-b border-[#3a302a] flex justify-between items-center">
         <h2 className="text-lg uppercase tracking-widest text-[#c1a063] font-light flex items-center gap-2">
           <ImageIcon className="text-[#c1a063]" size={20} /> Galería de Mapas
@@ -34,10 +36,11 @@ export function ViewMaps() {
           <div className="flex-1 w-full h-full cursor-grab active:cursor-grabbing">
             <TransformWrapper
               initialScale={1}
-              minScale={0.1}
-              maxScale={8}
+              minScale={0.5}
+              maxScale={3}
+              limitToBounds={true}
               centerOnInit={true}
-              wheel={{ step: 0.1 }}
+              wheel={{ step: 0.05 }}
             >
               <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
                 <img src={selectedMap.image} alt={selectedMap.name} className="pointer-events-none" />
@@ -61,7 +64,7 @@ export function ViewMaps() {
                 </div>
                 <div className="p-3 bg-[#1e1a17] flex justify-between items-center border-t border-[#3a302a]">
                   <span className="text-xs uppercase tracking-widest text-[#e6e2da] truncate">{m.name}</span>
-                  <button onClick={() => actions.deleteMap(m.id)} className="text-[#3a302a] hover:text-[#8a211b] p-1 transition-colors">
+                  <button onClick={() => setDeleteId(m.id)} className="text-[#3a302a] hover:text-[#8a211b] p-1 transition-colors">
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -78,6 +81,13 @@ export function ViewMaps() {
       )}
 
       <AddMapModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      <ConfirmDeleteModal 
+        isOpen={!!deleteId} 
+        onClose={() => setDeleteId(null)} 
+        onConfirm={() => { if (deleteId) actions.deleteMap(deleteId); }}
+        title="Eliminar Mapa"
+        message="¿Estás seguro de que quieres eliminar este mapa de forma permanente?"
+      />
     </div>
   );
 }
