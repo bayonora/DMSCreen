@@ -108,8 +108,16 @@ class Store {
   importData(jsonString: string) {
     try {
       const parsed = JSON.parse(jsonString);
-      // Basic validation could be added here
+      if (Array.isArray(parsed)) {
+        alert("Parece que estás intentando importar un archivo de una sección específica (como Notas u Objetos) en el Importador Global. Ve a la sección correspondiente para importarlo.");
+        return;
+      }
+      if (typeof parsed !== 'object' || parsed === null) {
+        alert("Error al importar: Formato no válido.");
+        return;
+      }
       this.setState(parsed);
+      alert("Datos importados correctamente.");
     } catch (e) {
       alert("Error al importar: Archivo no válido.");
     }

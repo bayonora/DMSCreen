@@ -66,6 +66,11 @@ export function ViewItems() {
         if (Array.isArray(imported)) {
           if (activeTab === "items") store.setState({ customItems: imported });
           else store.setState({ lootTables: imported });
+        } else if (imported && ((activeTab === "items" && imported.customItems) || (activeTab === "loot" && imported.lootTables))) {
+          if (activeTab === "items") store.setState({ customItems: imported.customItems });
+          else store.setState({ lootTables: imported.lootTables });
+        } else {
+           alert("El archivo no parece contener datos válidos para esta sección.");
         }
       } catch (err) {
         alert("Archivo inválido.");
@@ -103,11 +108,11 @@ export function ViewItems() {
           </button>
         </div>
         
-        <div className="flex space-x-2">
-          <button onClick={() => fileInputRef.current?.click()} className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors" title="Importar">
+        <div className="flex space-x-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
+          <button onClick={() => fileInputRef.current?.click()} className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors shrink-0" title="Importar">
             <Upload size={18} />
           </button>
-          <button onClick={handleExport} className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors" title="Exportar">
+          <button onClick={handleExport} className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors shrink-0" title="Exportar">
             <Download size={18} />
           </button>
           <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImport} />
@@ -117,7 +122,7 @@ export function ViewItems() {
               if (activeTab === "items") setEditingItem({ id: "", name: "", description: "", value: "", image: "" });
               else setEditingTable({ id: "", name: "", rawText: "" });
             }}
-            className="flex items-center space-x-2 px-4 py-2 bg-[#c1a063] text-black hover:bg-white transition-colors uppercase tracking-wider text-sm font-semibold"
+            className="flex items-center space-x-2 px-4 py-2 bg-[#c1a063] text-black hover:bg-white transition-colors uppercase tracking-wider text-sm font-semibold whitespace-nowrap shrink-0"
           >
             <Plus size={16} />
             <span>{activeTab === "items" ? "Nuevo Objeto" : "Nueva Tabla"}</span>

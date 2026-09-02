@@ -17,12 +17,12 @@ export function ViewMaps() {
 
   return (
     <div className="flex-1 flex flex-col bg-transparent border-none rounded-none overflow-hidden">
-      <div className="bg-[#1e1a17] px-6 py-4 border-b border-[#3a302a] flex justify-between items-center">
-        <h2 className="text-lg uppercase tracking-widest text-[#c1a063] font-light flex items-center gap-2">
-          <ImageIcon className="text-[#c1a063]" size={20} /> Galería de Mapas
+      <div className="bg-[#1e1a17] px-4 sm:px-6 py-4 border-b border-[#3a302a] flex justify-between items-center gap-4">
+        <h2 className="text-lg uppercase tracking-widest text-[#c1a063] font-light flex items-center gap-2 truncate">
+          <ImageIcon className="text-[#c1a063] shrink-0" size={20} /> <span className="hidden sm:inline">Galería de Mapas</span><span className="sm:hidden">Mapas</span>
         </h2>
-        <Button onClick={() => setIsAddOpen(true)}>
-          <Plus size={14} className="mr-1" /> Añadir Mapa
+        <Button onClick={() => setIsAddOpen(true)} className="whitespace-nowrap shrink-0">
+          <Plus size={14} className="mr-1" /> Añadir
         </Button>
       </div>
 
@@ -33,18 +33,37 @@ export function ViewMaps() {
              <Button variant="secondary" onClick={() => setSelectedMapId(null)}>Volver a la galería</Button>
           </div>
           
-          <div className="flex-1 w-full h-full cursor-grab active:cursor-grabbing">
+          <div className="flex-1 w-full h-full cursor-grab active:cursor-grabbing relative">
             <TransformWrapper
               initialScale={1}
               minScale={0.5}
-              maxScale={3}
-              limitToBounds={true}
+              maxScale={5}
+              limitToBounds={false}
               centerOnInit={true}
-              wheel={{ step: 0.05 }}
+              wheel={{ wheelDisabled: true }}
+              doubleClick={{ disabled: true }}
+              panning={{ excluded: ['zoom-controls'] }}
             >
-              <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
-                <img src={selectedMap.image} alt={selectedMap.name} className="pointer-events-none" />
-              </TransformComponent>
+              {({ zoomIn, zoomOut, resetTransform, setTransform, state, instance }) => (
+                <>
+                  <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
+                    <img src={selectedMap.image} alt={selectedMap.name} className="pointer-events-none" />
+                  </TransformComponent>
+                  
+                  <div 
+                    className="zoom-controls absolute bottom-6 left-1/2 -translate-x-1/2 z-20 bg-[#1e1a17]/90 backdrop-blur-sm px-4 py-2 border border-[#3a302a] flex items-center gap-3 shadow-lg shadow-black/50 rounded-full"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onWheel={(e) => e.stopPropagation()}
+                  >
+                    <button onClick={() => zoomOut(0.2)} className="text-[#8b7355] hover:text-[#c1a063] font-bold px-4 text-2xl transition-colors">-</button>
+                    <button onClick={() => zoomIn(0.2)} className="text-[#8b7355] hover:text-[#c1a063] font-bold px-4 text-2xl transition-colors">+</button>
+                    <div className="w-[1px] h-6 bg-[#3a302a] mx-1"></div>
+                    <button onClick={() => resetTransform()} className="text-[10px] uppercase tracking-widest text-[#8b7355] hover:text-[#c1a063] transition-colors">Reset</button>
+                  </div>
+                </>
+              )}
             </TransformWrapper>
           </div>
         </div>
@@ -74,7 +93,7 @@ export function ViewMaps() {
           {maps.length === 0 && (
             <div className="text-center opacity-50 py-20 flex flex-col items-center">
               <ImageIcon size={48} className="mb-4 text-[#c1a063]" />
-              <p className="font-serif">No hay mapas guardados.</p>
+              <p className="">No hay mapas guardados.</p>
             </div>
           )}
         </div>

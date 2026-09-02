@@ -27,7 +27,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
         )}
       >
         <div className="flex items-center justify-between p-4 border-b border-[#3a302a]">
-          <h2 className="text-2xl font-serif text-[#c1a063] uppercase tracking-widest">{title}</h2>
+          <h2 className="text-2xl font-display text-[#c1a063] uppercase tracking-widest">{title}</h2>
           <button
             onClick={onClose}
             className="p-1 text-[#c1a063] hover:text-white transition-colors"

@@ -51,33 +51,56 @@ export function ViewParty() {
     reader.onload = (event) => {
       const result = event.target?.result;
       if (typeof result === "string") {
-        store.importData(result);
+        try {
+          const parsed = JSON.parse(result);
+          if (parsed.players !== undefined || parsed.npcs !== undefined) {
+            if (parsed.players !== undefined) store.setState({ players: parsed.players });
+            if (parsed.npcs !== undefined) store.setState({ npcs: parsed.npcs });
+          } else {
+             // Maybe they are importing a backup with everything, that's handled by global settings.
+             // If they just imported an array here by mistake, we don't know if it's players or npcs.
+             alert("El archivo no parece ser una exportación de Grupo válida.");
+          }
+        } catch (err) {
+          alert("Archivo inválido.");
+        }
       }
     };
     reader.readAsText(file);
     e.target.value = '';
   };
 
+  const exportData = () => {
+    const data = { players, npcs };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+    const downloadAnchorNode = document.createElement("a");
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "dm_screen_party.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-transparent border-none rounded-none overflow-hidden">
-      <div className="bg-[#1e1a17] px-6 py-4 border-b border-[#3a302a] flex justify-between items-center">
-        <div className="flex gap-2">
-          <Button variant={tab === "players" ? "primary" : "secondary"} onClick={() => setTab("players")}>
+      <div className="bg-[#1e1a17] px-4 sm:px-6 py-4 border-b border-[#3a302a] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
+          <Button variant={tab === "players" ? "primary" : "secondary"} onClick={() => setTab("players")} className="whitespace-nowrap">
             Jugadores ({players.length})
           </Button>
-          <Button variant={tab === "npcs" ? "primary" : "secondary"} onClick={() => setTab("npcs")}>
+          <Button variant={tab === "npcs" ? "primary" : "secondary"} onClick={() => setTab("npcs")} className="whitespace-nowrap">
             NPCs ({npcs.length})
           </Button>
         </div>
-        <div className="flex gap-2">
-          <label className="cursor-pointer px-4 py-2 bg-[#1a1614] border border-[#3a302a] text-[#8b7355] text-xs uppercase tracking-widest hover:bg-[#2a2420] hover:border-[#c1a063] hover:text-[#c1a063] inline-flex items-center justify-center transition-all shadow-sm rounded-none">
+        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
+          <label className="cursor-pointer px-3 sm:px-4 py-2 bg-[#1a1614] border border-[#3a302a] text-[#8b7355] text-xs uppercase tracking-widest hover:bg-[#2a2420] hover:border-[#c1a063] hover:text-[#c1a063] inline-flex items-center justify-center transition-all shadow-sm rounded-none whitespace-nowrap">
             <Upload size={14} className="mr-2" /> Importar
             <input type="file" accept=".json" className="hidden" onChange={importData} />
           </label>
-          <Button variant="secondary" onClick={() => store.exportData()}>
+          <Button variant="secondary" onClick={exportData} className="whitespace-nowrap">
             <Download size={14} className="mr-2" /> Exportar
           </Button>
-          <Button onClick={openNew}>
+          <Button onClick={openNew} className="whitespace-nowrap">
             <Plus size={14} className="mr-2" /> Añadir
           </Button>
         </div>
@@ -111,10 +134,10 @@ export function ViewParty() {
           </AnimatePresence>
           
           {tab === "players" && players.length === 0 && (
-             <p className="text-[#e6e2da] opacity-50 w-full text-center py-10 font-serif">No hay jugadores. Añade uno para empezar.</p>
+             <p className="text-[#e6e2da] opacity-50 w-full text-center py-10 ">No hay jugadores. Añade uno para empezar.</p>
           )}
           {tab === "npcs" && npcs.length === 0 && (
-             <p className="text-[#e6e2da] opacity-50 w-full text-center py-10 font-serif">No hay NPCs. Añade uno para empezar.</p>
+             <p className="text-[#e6e2da] opacity-50 w-full text-center py-10 ">No hay NPCs. Añade uno para empezar.</p>
           )}
         </div>
       </div>
@@ -199,7 +222,7 @@ function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen:
           </div>
         )}
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input label="Nombre" name="name" required defaultValue={initialData?.name} />
           <Input label="Raza" name="race" defaultValue={initialData?.race} />
           {type === "player" && (
@@ -215,7 +238,7 @@ function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen:
           <Input label="Clase de Armadura (AC)" name="ac" type="number" required defaultValue={initialData?.ac} />
         </div>
 
-        <div className="border border-[#3a302a] rounded-sm p-3 grid grid-cols-6 gap-2 bg-[#0a0a09]">
+        <div className="border border-[#3a302a] rounded-sm p-3 grid grid-cols-3 sm:grid-cols-6 gap-2 bg-[#0a0a09]">
           <Input label="FUE" name="str" type="number" required defaultValue={initialData?.stats?.STR || 10} />
           <Input label="DEX" name="dex" type="number" required defaultValue={initialData?.stats?.DEX || 10} />
           <Input label="CON" name="con" type="number" required defaultValue={initialData?.stats?.CON || 10} />

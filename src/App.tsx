@@ -74,13 +74,13 @@ export default function App() {
 
   return (
     <div 
-      className="flex flex-col h-screen w-full text-[#e6e2da] overflow-hidden font-serif select-none"
+      className="flex flex-col h-screen w-full text-[#e6e2da] overflow-hidden font-sans select-none"
       style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #1a1614 0%, #0f0d0c 100%)', backgroundColor: '#0f0d0c' }}
     >
       <header className="flex justify-between items-center px-6 py-3 border-b border-[#3a302a] bg-[#161311]">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 border-2 border-[#c1a063] rotate-45 flex items-center justify-center">
-            <span className="-rotate-45 font-bold text-xl text-[#c1a063]">DM</span>
+            <span className="-rotate-45 font-bold text-xl text-[#c1a063] font-display">DM</span>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -121,7 +121,7 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      <nav className="flex-none flex justify-center bg-[#0a0a09] border-t border-[#3a302a] py-2 px-6 pb-safe z-20 space-x-1 sm:space-x-4 overflow-x-auto custom-scrollbar">
+      <nav className="flex-none flex justify-start sm:justify-center bg-[#0a0a09] border-t border-[#3a302a] py-2 px-4 sm:px-6 pb-safe z-20 space-x-1 sm:space-x-4 overflow-x-auto custom-scrollbar">
         <NavButton active={activeTab === "party"} onClick={() => setActiveTab("party")} label="Grupo" icon={Users} />
         <NavButton active={activeTab === "initiative"} onClick={() => setActiveTab("initiative")} label="Iniciativa" icon={Swords} />
         <NavButton active={activeTab === "maps"} onClick={() => setActiveTab("maps")} label="Mapas" icon={MapIcon} />

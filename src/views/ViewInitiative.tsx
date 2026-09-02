@@ -59,31 +59,31 @@ export function ViewInitiative() {
 
   return (
     <div className="flex-1 flex flex-col bg-transparent border-none rounded-none overflow-hidden">
-      <div className="bg-[#1e1a17] px-6 py-4 border-b border-[#3a302a] flex justify-between items-center">
-        <div className="flex items-center gap-4">
+      <div className="bg-[#1e1a17] px-4 sm:px-6 py-4 border-b border-[#3a302a] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+        <div className="flex items-center gap-4 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
           <h2 className="text-lg uppercase tracking-widest text-[#c1a063] font-light hidden sm:block">Iniciativa</h2>
           <div className="flex gap-2">
             {!isCombatActive ? (
-              <Button onClick={handleStartCombat} className="bg-[#8a211b] text-white hover:bg-[#a52a23]">
+              <Button onClick={handleStartCombat} className="bg-[#8a211b] text-white hover:bg-[#a52a23] whitespace-nowrap">
                 <Play size={14} className="mr-1" /> Iniciar Combate
               </Button>
             ) : (
               <>
-                <Button onClick={handleNextTurn} variant="secondary" className="border-[#3a302a] text-[#c1a063]">
+                <Button onClick={handleNextTurn} variant="secondary" className="border-[#3a302a] text-[#c1a063] whitespace-nowrap">
                   <SkipForward size={14} className="mr-1" /> Siguiente Turno
                 </Button>
-                <Button onClick={handleEndCombat} variant="danger">
-                  <Square size={14} className="mr-1" /> Finalizar Combate
+                <Button onClick={handleEndCombat} variant="danger" className="whitespace-nowrap">
+                  <Square size={14} className="mr-1" /> Finalizar
                 </Button>
               </>
             )}
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => setIsGraveyardOpen(true)}>
+        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
+          <Button variant="secondary" onClick={() => setIsGraveyardOpen(true)} className="whitespace-nowrap">
             <span className="mr-2">💀</span> Cementerio ({graveyard.length})
           </Button>
-          <Button onClick={() => setIsAddModalOpen(true)}>
+          <Button onClick={() => setIsAddModalOpen(true)} className="whitespace-nowrap">
             <Plus size={14} className="mr-1" /> Añadir
           </Button>
         </div>
@@ -433,7 +433,7 @@ function GraveyardModal({ isOpen, onClose, onViewChar }: { isOpen: boolean, onCl
             </div>
           )
         })}
-        {graveyard.length === 0 && <p className="text-[#e6e2da] opacity-50 text-center py-4 font-serif">El cementerio está vacío.</p>}
+        {graveyard.length === 0 && <p className="text-[#e6e2da] opacity-50 text-center py-4 ">El cementerio está vacío.</p>}
       </div>
       <ConfirmDeleteModal 
         isOpen={!!deleteId} 

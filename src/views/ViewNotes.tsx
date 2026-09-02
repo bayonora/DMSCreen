@@ -49,9 +49,13 @@ export function ViewNotes() {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const imported = JSON.parse(event.target?.result as string) as Note[];
+        const imported = JSON.parse(event.target?.result as string);
         if (Array.isArray(imported)) {
           store.setState({ notes: imported });
+        } else if (imported && imported.notes && Array.isArray(imported.notes)) {
+          store.setState({ notes: imported.notes });
+        } else {
+          alert("El archivo no parece contener notas válidas.");
         }
       } catch (err) {
         alert("Archivo de notas inválido.");
@@ -63,19 +67,19 @@ export function ViewNotes() {
 
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
         <h2 className="text-2xl text-[#c1a063] font-light tracking-widest uppercase">Notas</h2>
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors"
+            className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors shrink-0"
             title="Importar Notas"
           >
             <Upload size={18} />
           </button>
           <button
             onClick={handleExport}
-            className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors"
+            className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors shrink-0"
             title="Exportar Notas"
           >
             <Download size={18} />
@@ -84,7 +88,7 @@ export function ViewNotes() {
           
           <button
             onClick={() => setEditingNote({ id: "", title: "", content: "", color: COLORS[0] })}
-            className="flex items-center space-x-2 px-4 py-2 bg-[#c1a063] text-black hover:bg-white transition-colors uppercase tracking-wider text-sm font-semibold"
+            className="flex items-center space-x-2 px-4 py-2 bg-[#c1a063] text-black hover:bg-white transition-colors uppercase tracking-wider text-sm font-semibold whitespace-nowrap shrink-0"
           >
             <Plus size={16} />
             <span>Nueva Nota</span>

@@ -29,17 +29,17 @@ export function ViewShops() {
 
   return (
     <div className="flex-1 flex flex-col bg-transparent border-none rounded-none overflow-hidden relative">
-      <div className="bg-[#1e1a17] px-6 py-4 border-b border-[#3a302a] flex justify-between items-center z-10 relative">
-        <h2 className="text-lg uppercase tracking-widest text-[#c1a063] font-light flex items-center gap-2">
-          <StoreIcon className="text-[#c1a063]" size={20} /> Tiendas
+      <div className="bg-[#1e1a17] px-4 sm:px-6 py-4 border-b border-[#3a302a] flex justify-between items-center z-10 relative gap-4">
+        <h2 className="text-lg uppercase tracking-widest text-[#c1a063] font-light flex items-center gap-2 truncate">
+          <StoreIcon className="text-[#c1a063] shrink-0" size={20} /> <span className="hidden sm:inline">Tiendas</span><span className="sm:hidden">Tiendas</span>
         </h2>
         {!selectedShop && (
-          <Button onClick={() => { setEditShopData(null); setIsAddOpen(true); }}>
+          <Button onClick={() => { setEditShopData(null); setIsAddOpen(true); }} className="whitespace-nowrap shrink-0">
             <Plus size={14} className="mr-1" /> Nueva Tienda
           </Button>
         )}
         {selectedShop && (
-          <Button variant="secondary" onClick={() => setSelectedShopId(null)}>
+          <Button variant="secondary" onClick={() => setSelectedShopId(null)} className="whitespace-nowrap shrink-0">
             Volver a Tiendas
           </Button>
         )}
@@ -62,7 +62,7 @@ export function ViewShops() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-lg text-[#c1a063] truncate font-serif">{s.name}</h3>
+                  <h3 className="font-bold text-lg text-[#c1a063] truncate font-display">{s.name}</h3>
                   <p className="text-xs uppercase tracking-widest text-[#e6e2da] opacity-70 truncate">{s.ownerName}</p>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -72,7 +72,7 @@ export function ViewShops() {
               </div>
             ))}
             {shops.length === 0 && (
-              <p className="text-[#e6e2da] opacity-50 text-center py-10 col-span-full font-serif">No hay tiendas. Crea una para añadir objetos.</p>
+              <p className="text-[#e6e2da] opacity-50 text-center py-10 col-span-full ">No hay tiendas. Crea una para añadir objetos.</p>
             )}
           </div>
         ) : (
@@ -124,7 +124,7 @@ function ShopInventory({ shop }: { shop: Shop }) {
     <div className="max-w-3xl flex flex-col gap-6 relative z-10">
       <div className="flex justify-between items-center bg-[#1e1a17]/90 p-6 border border-[#3a302a] backdrop-blur-md shadow-lg shadow-black/50">
         <div>
-          <h2 className="text-2xl font-serif text-[#c1a063] uppercase tracking-widest">{shop.name}</h2>
+          <h2 className="text-2xl font-display text-[#c1a063] uppercase tracking-widest">{shop.name}</h2>
           <p className="text-xs uppercase tracking-widest text-[#e6e2da] opacity-70 mt-1">Mercader: {shop.ownerName}</p>
         </div>
         <Button onClick={() => { setEditItemData(null); setIsAddItemOpen(true); }}>
@@ -150,7 +150,7 @@ function ShopInventory({ shop }: { shop: Shop }) {
                   <EyeOff size={20} className="text-[#3a302a]" />
                 </div>
                 <div>
-                  <div className="font-bold text-[#e6e2da] flex items-center gap-2 font-serif text-lg">
+                  <div className="font-bold text-[#e6e2da] flex items-center gap-2  text-lg">
                     Objeto Oculto
                   </div>
                   <div className="text-sm font-mono text-[#c1a063]">??? gp</div>
@@ -166,7 +166,7 @@ function ShopInventory({ shop }: { shop: Shop }) {
                   </div>
                 )}
                 <div>
-                  <div className="font-bold text-[#e6e2da] flex items-center gap-2 font-serif text-lg">
+                  <div className="font-bold text-[#e6e2da] flex items-center gap-2  text-lg">
                     {item.name}
                   </div>
                   <div className="text-sm font-mono text-[#c1a063]">{item.price}</div>
@@ -192,7 +192,7 @@ function ShopInventory({ shop }: { shop: Shop }) {
           </div>
         ))}
         {shop.items.length === 0 && (
-          <p className="text-center text-[#e6e2da] opacity-50 py-10 bg-[#1e1a17]/50 border border-[#3a302a] backdrop-blur-sm font-serif">El inventario está vacío.</p>
+          <p className="text-center text-[#e6e2da] opacity-50 py-10 bg-[#1e1a17]/50 border border-[#3a302a] backdrop-blur-sm ">El inventario está vacío.</p>
         )}
       </div>
 
@@ -213,11 +213,11 @@ function ShopInventory({ shop }: { shop: Shop }) {
             )}
             <div className="flex-1 space-y-4">
               <div>
-                <h3 className="text-3xl font-serif text-[#c1a063]">{viewItem.name}</h3>
+                <h3 className="text-3xl font-display text-[#c1a063]">{viewItem.name}</h3>
                 <div className="text-xl font-mono text-[#c1a063] opacity-80 mt-1">{viewItem.price}</div>
               </div>
               <div className="w-full h-px bg-[#3a302a]" />
-              <div className="text-[#e6e2da] opacity-90 whitespace-pre-wrap leading-relaxed font-serif">
+              <div className="text-[#e6e2da] opacity-90 whitespace-pre-wrap leading-relaxed ">
                 {viewItem.description}
               </div>
             </div>
