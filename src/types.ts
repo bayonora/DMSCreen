@@ -52,6 +52,14 @@ export type Combatant = {
   statuses: StatusEffect[];
 };
 
+export type LocationData = {
+  id: string;
+  name: string;
+  region?: string;
+  description: string;
+  image?: string;
+};
+
 export type MapData = {
   id: string;
   name: string;

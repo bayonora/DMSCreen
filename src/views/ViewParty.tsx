@@ -108,7 +108,7 @@ export function ViewParty() {
 
       <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
         <div className="flex flex-wrap gap-6 items-start justify-center">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {tab === "players" && players.map((p) => (
               <motion.div
                 key={p.id}

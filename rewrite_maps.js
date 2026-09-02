@@ -1,9 +1,11 @@
-import React, { useState, useRef } from "react";
+const fs = require('fs');
+
+const code = `import React, { useState, useRef } from "react";
 import { useStore, actions } from "../store/useStore";
 import { Modal } from "../components/ui/Modal";
 import { Button, Input, Textarea } from "../components/ui/Input";
 import { compressImage } from "../lib/utils";
-import { Plus, Trash2, Maximize2, Image as ImageIcon, MapPin, Edit2, Download, Upload } from "lucide-react";
+import { Plus, Trash2, Maximize2, Image as ImageIcon, MapPin, Edit2 } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { LocationData } from "../types";
@@ -17,72 +19,7 @@ export function ViewMaps() {
   
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
-  const [editMapData, setEditMapData] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-
-  
-  const importMapsRef = useRef<HTMLInputElement>(null);
-  const importLocsRef = useRef<HTMLInputElement>(null);
-
-  const exportMaps = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(maps));
-    const downloadAnchorNode = document.createElement("a");
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "mapas_dnd.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
-
-  const exportLocations = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(locations));
-    const downloadAnchorNode = document.createElement("a");
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "lugares_dnd.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
-
-  const handleImportMaps = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target?.result as string);
-        if (Array.isArray(parsed)) {
-          actions.importMaps(parsed);
-        } else {
-          alert("Formato de mapas incorrecto.");
-        }
-      } catch (err) {
-        alert("Error leyendo el archivo.");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  };
-
-  const handleImportLocations = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target?.result as string);
-        if (Array.isArray(parsed)) {
-          actions.importLocations(parsed);
-        } else {
-          alert("Formato de lugares incorrecto.");
-        }
-      } catch (err) {
-        alert("Error leyendo el archivo.");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  };
 
   const selectedMap = maps.find((m) => m.id === selectedMapId);
 
@@ -137,25 +74,16 @@ export function ViewMaps() {
               <h2 className="text-sm uppercase tracking-widest text-[#c1a063] font-light flex items-center gap-2">
                 <ImageIcon className="text-[#c1a063]" size={16} /> Mapas
               </h2>
-              <div className="flex gap-2">
-                <input type="file" accept=".json" ref={importMapsRef} style={{display: 'none'}} onChange={handleImportMaps} />
-                <Button variant="ghost" size="sm" onClick={() => exportMaps()} title="Exportar Mapas" className="px-2">
-                  <Download size={16} />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => importMapsRef.current?.click()} title="Importar Mapas" className="px-2">
-                  <Upload size={16} />
-                </Button>
-                <Button onClick={() => setIsAddOpen(true)} size="sm" className="whitespace-nowrap">
-                  <Plus size={14} className="mr-1" /> Añadir
-                </Button>
-              </div>
+              <Button onClick={() => setIsAddOpen(true)} size="sm" className="whitespace-nowrap">
+                <Plus size={14} className="mr-1" /> Añadir
+              </Button>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
               {maps.map((m) => (
                 <div key={m.id} className="bg-[#1e1a17] border border-[#3a302a] flex flex-col h-48 group shadow-lg shadow-black/50 relative">
                   <div 
                     className="flex-1 w-full h-full bg-cover bg-center cursor-pointer relative"
-                    style={{ backgroundImage: `url(${m.image})` }}
+                    style={{ backgroundImage: \`url(\${m.image})\` }}
                     onClick={() => setSelectedMapId(m.id)}
                   >
                     <div className="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -164,14 +92,9 @@ export function ViewMaps() {
                   </div>
                   <div className="p-3 bg-[#1e1a17] flex justify-between items-center border-t border-[#3a302a]">
                     <span className="text-xs uppercase tracking-widest text-[#e6e2da] truncate">{m.name}</span>
-                    <div className="flex gap-1">
-                      <button onClick={() => setEditMapData(m)} className="text-[#3a302a] hover:text-[#c1a063] p-1 transition-colors">
-                        <Edit2 size={16} />
-                      </button>
-                      <button onClick={() => setDeleteId(m.id)} className="text-[#3a302a] hover:text-[#8a211b] p-1 transition-colors">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                    <button onClick={() => setDeleteId(m.id)} className="text-[#3a302a] hover:text-[#8a211b] p-1 transition-colors">
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -190,30 +113,21 @@ export function ViewMaps() {
               <h2 className="text-sm uppercase tracking-widest text-[#c1a063] font-light flex items-center gap-2">
                 <MapPin className="text-[#c1a063]" size={16} /> Lugares
               </h2>
-              <div className="flex gap-2">
-                <input type="file" accept=".json" ref={importLocsRef} style={{display: 'none'}} onChange={handleImportLocations} />
-                <Button variant="ghost" size="sm" onClick={() => exportLocations()} title="Exportar Lugares" className="px-2">
-                  <Download size={16} />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => importLocsRef.current?.click()} title="Importar Lugares" className="px-2">
-                  <Upload size={16} />
-                </Button>
-                <Button onClick={() => setIsAddLocationOpen(true)} size="sm" className="whitespace-nowrap">
-                  <Plus size={14} className="mr-1" /> Añadir
-                </Button>
-              </div>
+              <Button onClick={() => setIsAddLocationOpen(true)} size="sm" className="whitespace-nowrap">
+                <Plus size={14} className="mr-1" /> Añadir
+              </Button>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
               {locations.map((loc) => (
                 <div key={loc.id} className="bg-[#1e1a17] border border-[#3a302a] flex flex-col cursor-pointer shadow-lg shadow-black/50 hover:border-[#c1a063] transition-colors group" onClick={() => setSelectedLocationId(loc.id)}>
                   {loc.image ? (
-                    <div className="w-full aspect-video bg-cover bg-center border-b border-[#3a302a] relative" style={{ backgroundImage: `url(${loc.image})` }}>
+                    <div className="w-full aspect-square bg-cover bg-center border-b border-[#3a302a] relative" style={{ backgroundImage: \`url(\${loc.image})\` }}>
                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <Maximize2 size={32} className="text-[#c1a063] drop-shadow-lg" />
                        </div>
                     </div>
                   ) : (
-                    <div className="w-full aspect-video bg-[#0f0d0c] border-b border-[#3a302a] flex items-center justify-center relative">
+                    <div className="w-full aspect-square bg-[#0f0d0c] border-b border-[#3a302a] flex items-center justify-center relative">
                       <MapPin size={32} className="text-[#3a302a]" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <Maximize2 size={32} className="text-[#c1a063] drop-shadow-lg" />
@@ -229,7 +143,7 @@ export function ViewMaps() {
             </div>
             {locations.length === 0 && (
               <div className="text-center opacity-50 py-20 flex flex-col items-center">
-                <ImageIcon size={48} className="mb-4 text-[#c1a063]" />
+                <MapPin size={48} className="mb-4 text-[#c1a063]" />
                 <p>No hay lugares guardados.</p>
               </div>
             )}
@@ -237,7 +151,7 @@ export function ViewMaps() {
         </div>
       )}
 
-      <AddMapModal isOpen={isAddOpen || !!editMapData} onClose={() => { setIsAddOpen(false); setEditMapData(null); }} initialData={editMapData} />
+      <AddMapModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
       <ConfirmDeleteModal 
         isOpen={!!deleteId} 
         onClose={() => setDeleteId(null)} 
@@ -268,40 +182,22 @@ export function ViewMaps() {
   );
 }
 
-function AddMapModal({ isOpen, onClose, initialData }: { isOpen: boolean, onClose: () => void, initialData?: any | null }) {
+function AddMapModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-    React.useEffect(() => {
-    if (initialData) {
-      setName(initialData.name);
-    } else {
-      setName("");
-    }
-  }, [initialData, isOpen]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return;
+    const file = fileRef.current?.files?.[0];
+    if (!file || !name) return;
     
     setLoading(true);
     try {
-      let base64 = initialData?.image;
-      const file = fileRef.current?.files?.[0];
-      if (file) {
-        base64 = await compressImage(file, 2048); // max 2048px width
-      } else if (!initialData) {
-        setLoading(false);
-        return; // require image only on creation
-      }
-      
-      if (initialData) {
-        actions.updateMap(initialData.id, { name, image: base64 });
-      } else {
-        actions.addMap({ name, image: base64 });
-      }
+      const base64 = await compressImage(file, 2048); // max 2048px width
+      actions.addMap({ name, image: base64 });
       onClose();
+      setName("");
       if (fileRef.current) fileRef.current.value = "";
     } catch (e) {
       alert("Error al procesar la imagen");
@@ -309,8 +205,9 @@ function AddMapModal({ isOpen, onClose, initialData }: { isOpen: boolean, onClos
       setLoading(false);
     }
   };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "Editar Mapa" : "Añadir Mapa"}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Añadir Mapa">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input label="Nombre del Mapa" value={name} onChange={(e) => setName(e.target.value)} required />
         <div className="flex flex-col gap-1 w-full">
@@ -319,7 +216,7 @@ function AddMapModal({ isOpen, onClose, initialData }: { isOpen: boolean, onClos
             type="file" 
             accept="image/*" 
             ref={fileRef}
-            required={!initialData}
+            required
             className="flex h-10 w-full bg-[#1e1a17] border border-[#3a302a] px-3 py-2 text-sm text-[#f5f2ed] file:border-0 file:bg-transparent file:text-[10px] file:uppercase file:tracking-widest file:font-bold file:text-[#c1a063] file:mr-4 file:cursor-pointer"
           />
         </div>
@@ -328,7 +225,7 @@ function AddMapModal({ isOpen, onClose, initialData }: { isOpen: boolean, onClos
         </p>
         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-[#3a302a]">
           <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>Cancelar</Button>
-          <Button type="submit" disabled={loading}>{loading ? "Procesando..." : (initialData ? "Guardar" : "Añadir")}</Button>
+          <Button type="submit" disabled={loading}>{loading ? "Procesando..." : "Añadir"}</Button>
         </div>
       </form>
     </Modal>
@@ -415,13 +312,13 @@ function ViewLocationModal({ locationId, onClose, onEdit, onDelete }: { location
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm" onClick={onClose}>
       <div 
-        className="bg-[#1e1a17] border border-[#3a302a] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-black custom-scrollbar relative flex flex-col"
+        className="bg-[#1e1a17] border border-[#3a302a] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-black custom-scrollbar relative flex flex-col md:flex-row"
         onClick={(e) => e.stopPropagation()}
       >
         {loc.image && (
-          <div className="w-full aspect-video bg-cover bg-center border-b border-[#3a302a]" style={{ backgroundImage: `url(${loc.image})` }} />
+          <div className="w-full md:w-1/2 min-h-[250px] md:min-h-[400px] bg-cover bg-center border-b md:border-b-0 md:border-r border-[#3a302a]" style={{ backgroundImage: \`url(\${loc.image})\` }} />
         )}
-        <div className="p-6 flex flex-col w-full">
+        <div className={\`p-6 flex flex-col \${loc.image ? 'w-full md:w-1/2' : 'w-full'}\`}>
           <div className="flex justify-between items-start mb-4">
             <div>
               <h2 className="text-xl text-[#c1a063] uppercase tracking-widest font-light">{loc.name}</h2>
@@ -453,3 +350,6 @@ function ViewLocationModal({ locationId, onClose, onEdit, onDelete }: { location
     </div>
   );
 }
+`
+
+fs.writeFileSync('src/views/ViewMaps.tsx', code);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Player, NPC, Character, Combatant, MapData, Shop, ShopItem, Note, CustomItem, LootTable } from "../types";
+import { Player, NPC, Character, Combatant, MapData, LocationData, Shop, ShopItem, Note, CustomItem, LootTable } from "../types";
 import { v4 as uuidv4 } from "uuid";
 
 // We use a custom hook instead of Zustand to keep it simple and directly tied to localStorage events if needed.
@@ -22,6 +22,7 @@ type StoreState = {
   combatants: Combatant[];
   graveyard: Combatant[];
   maps: MapData[];
+  locations: LocationData[];
   shops: Shop[];
   notes: Note[];
   customItems: CustomItem[];
@@ -35,6 +36,7 @@ const DEFAULT_STATE: StoreState = {
   combatants: [],
   graveyard: [],
   maps: [],
+  locations: [],
   shops: [],
   notes: [],
   customItems: [],
@@ -214,11 +216,39 @@ export const actions = {
   },
 
   // Maps
+  importMaps: (importedMaps: MapData[]) => {
+    const state = store.getState();
+    const newMaps = importedMaps.map(m => ({ ...m, id: m.id || uuidv4() }));
+    store.setState({ maps: [...state.maps, ...newMaps] });
+  },
   addMap: (map: Omit<MapData, "id">) => {
     store.setState({ maps: [...store.getState().maps, { ...map, id: uuidv4() }] });
   },
+  updateMap: (id: string, map: Partial<MapData>) => {
+    store.setState({
+      maps: store.getState().maps.map((m) => (m.id === id ? { ...m, ...map } : m)),
+    });
+  },
   deleteMap: (id: string) => {
     store.setState({ maps: store.getState().maps.filter((m) => m.id !== id) });
+  },
+
+  // Locations
+  importLocations: (importedLocs: LocationData[]) => {
+    const state = store.getState();
+    const newLocs = importedLocs.map(l => ({ ...l, id: l.id || uuidv4() }));
+    store.setState({ locations: [...(state.locations || []), ...newLocs] });
+  },
+  addLocation: (loc: Omit<LocationData, "id">) => {
+    store.setState({ locations: [...(store.getState().locations || []), { ...loc, id: uuidv4() }] });
+  },
+  updateLocation: (id: string, loc: Partial<LocationData>) => {
+    store.setState({
+      locations: (store.getState().locations || []).map((l) => (l.id === id ? { ...l, ...loc } : l)),
+    });
+  },
+  deleteLocation: (id: string) => {
+    store.setState({ locations: (store.getState().locations || []).filter((l) => l.id !== id) });
   },
 
   // Shops
