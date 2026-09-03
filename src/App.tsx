@@ -148,7 +148,7 @@ export default function App() {
                 onClick={() => { store.exportData(); setShowSettings(false); }}
                 className="flex items-center justify-center space-x-3 w-full p-4 border border-[#3a302a] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors group"
               >
-                <Download size={20} className="text-[#8b7355] group-hover:text-[#c1a063]" />
+                <Upload size={20} className="text-[#8b7355] group-hover:text-[#c1a063]" />
                 <span className="uppercase tracking-wider text-sm">Exportar Todo</span>
               </button>
               
@@ -156,7 +156,7 @@ export default function App() {
                 onClick={handleImportClick}
                 className="flex items-center justify-center space-x-3 w-full p-4 border border-[#3a302a] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors group"
               >
-                <Upload size={20} className="text-[#8b7355] group-hover:text-[#c1a063]" />
+                <Download size={20} className="text-[#8b7355] group-hover:text-[#c1a063]" />
                 <span className="uppercase tracking-wider text-sm">Importar Datos</span>
               </button>
               <input 

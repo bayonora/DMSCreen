@@ -110,10 +110,10 @@ export function ViewItems() {
         
         <div className="flex space-x-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
           <button onClick={() => fileInputRef.current?.click()} className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors shrink-0" title="Importar">
-            <Upload size={18} />
+            <Download size={18} />
           </button>
           <button onClick={handleExport} className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors shrink-0" title="Exportar">
-            <Download size={18} />
+            <Upload size={18} />
           </button>
           <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImport} />
           

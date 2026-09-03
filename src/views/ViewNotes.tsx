@@ -79,14 +79,14 @@ export function ViewNotes() {
             className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors shrink-0"
             title="Importar Notas"
           >
-            <Upload size={18} />
+            <Download size={18} />
           </button>
           <button
             onClick={handleExport}
             className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors shrink-0"
             title="Exportar Notas"
           >
-            <Download size={18} />
+            <Upload size={18} />
           </button>
           <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImport} />
           

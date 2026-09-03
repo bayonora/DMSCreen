@@ -94,11 +94,11 @@ export function ViewParty() {
         </div>
         <div className="flex gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
           <label className="cursor-pointer px-3 sm:px-4 py-2 bg-[#1a1614] border border-[#3a302a] text-[#8b7355] text-xs uppercase tracking-widest hover:bg-[#2a2420] hover:border-[#c1a063] hover:text-[#c1a063] inline-flex items-center justify-center transition-all shadow-sm rounded-none whitespace-nowrap">
-            <Upload size={14} className="mr-2" /> Importar
+            <Download size={14} className="mr-2" /> Importar
             <input type="file" accept=".json" className="hidden" onChange={importData} />
           </label>
           <Button variant="secondary" onClick={exportData} className="whitespace-nowrap">
-            <Download size={14} className="mr-2" /> Exportar
+            <Upload size={14} className="mr-2" /> Exportar
           </Button>
           <Button onClick={openNew} className="whitespace-nowrap">
             <Plus size={14} className="mr-2" /> Añadir

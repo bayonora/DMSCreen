@@ -140,10 +140,10 @@ export function ViewMaps() {
               <div className="flex gap-2">
                 <input type="file" accept=".json" ref={importMapsRef} style={{display: 'none'}} onChange={handleImportMaps} />
                 <Button variant="ghost" size="sm" onClick={() => exportMaps()} title="Exportar Mapas" className="px-2">
-                  <Download size={16} />
+                  <Upload size={16} />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => importMapsRef.current?.click()} title="Importar Mapas" className="px-2">
-                  <Upload size={16} />
+                  <Download size={16} />
                 </Button>
                 <Button onClick={() => setIsAddOpen(true)} size="sm" className="whitespace-nowrap">
                   <Plus size={14} className="mr-1" /> Añadir
@@ -193,10 +193,10 @@ export function ViewMaps() {
               <div className="flex gap-2">
                 <input type="file" accept=".json" ref={importLocsRef} style={{display: 'none'}} onChange={handleImportLocations} />
                 <Button variant="ghost" size="sm" onClick={() => exportLocations()} title="Exportar Lugares" className="px-2">
-                  <Download size={16} />
+                  <Upload size={16} />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => importLocsRef.current?.click()} title="Importar Lugares" className="px-2">
-                  <Upload size={16} />
+                  <Download size={16} />
                 </Button>
                 <Button onClick={() => setIsAddLocationOpen(true)} size="sm" className="whitespace-nowrap">
                   <Plus size={14} className="mr-1" /> Añadir
