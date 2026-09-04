@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useRef } from "react";
 import { useStore, actions, store } from "../store/useStore";
-import { Plus, X, Download, Upload, Image as ImageIcon } from "lucide-react";
+import { Plus, X, Download, Upload, Image as ImageIcon, Hexagon } from "lucide-react";
 import { CustomItem, LootTable } from "../types";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { cn } from "../lib/utils";
@@ -12,6 +12,33 @@ export function ViewItems() {
   const [editingItem, setEditingItem] = useState<CustomItem | null>(null);
   const [editingTable, setEditingTable] = useState<{ id: string; name: string; rawText: string } | null>(null);
   const [deleteData, setDeleteData] = useState<{ type: "item" | "table"; id: string } | null>(null);
+
+  const [rollingTable, setRollingTable] = useState<LootTable | null>(null);
+  const [rollingState, setRollingState] = useState<'idle' | 'rolling' | 'result'>('idle');
+  const [currentRollNumber, setCurrentRollNumber] = useState<number>(1);
+  const [finalItem, setFinalItem] = useState<{ index: number, text: string } | null>(null);
+
+  const startLootRoll = (table: LootTable) => {
+    if (!table.items || table.items.length === 0) return;
+    setRollingTable(table);
+    setRollingState('rolling');
+    setFinalItem(null);
+    
+    let ticks = 0;
+    const maxTicks = 15;
+    const interval = setInterval(() => {
+      setCurrentRollNumber(Math.floor(Math.random() * table.items.length) + 1);
+      ticks++;
+      if (ticks >= maxTicks) {
+        clearInterval(interval);
+        const finalIndex = Math.floor(Math.random() * table.items.length);
+        setCurrentRollNumber(finalIndex + 1);
+        setFinalItem({ index: finalIndex + 1, text: table.items[finalIndex] });
+        setRollingState('result');
+      }
+    }, 100);
+  };
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSaveItem = (e: React.FormEvent) => {
@@ -169,7 +196,11 @@ export function ViewItems() {
               <div key={table.id} className="bg-[#161311] border border-[#3a302a] p-4 flex flex-col shadow-lg">
                 <div className="flex justify-between items-center mb-4 border-b border-[#3a302a] pb-2">
                   <h3 className="text-lg text-[#c1a063] font-bold">{table.name}</h3>
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-3 items-center">
+                    <button onClick={() => startLootRoll(table)} className="text-sm text-[#c1a063] hover:text-[#dfba76] uppercase tracking-wider flex items-center gap-1 font-bold" title={`Tirar d${table.items.length}`}>
+                      <Hexagon size={16} /> Tirar
+                    </button>
+                    <div className="w-px h-4 bg-[#3a302a]"></div>
                     <button onClick={() => setEditingTable({ id: table.id, name: table.name, rawText: table.items.join("\n") })} className="text-sm text-[#8b7355] hover:text-white uppercase tracking-wider">Editar</button>
                     <button onClick={() => setDeleteData({ type: "table", id: table.id })} className="text-sm text-red-500 hover:text-red-400 uppercase tracking-wider">Borrar</button>
                   </div>
@@ -269,6 +300,41 @@ export function ViewItems() {
               <button type="submit" className="px-6 py-2 bg-[#c1a063] text-black font-bold uppercase tracking-widest hover:bg-white transition-colors">Guardar Tabla</button>
             </div>
           </form>
+        </div>
+      )}
+
+      
+      {/* Loot Roll Modal */}
+      {rollingTable && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-sm transition-all" onClick={() => setRollingTable(null)}>
+          <div className="bg-[#161311] border border-[#3a302a] p-8 max-w-md w-full relative shadow-2xl shadow-black flex flex-col items-center text-center" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setRollingTable(null)} className="absolute top-4 right-4 text-[#8b7355] hover:text-white"><X size={20} /></button>
+            <h2 className="text-xl text-[#c1a063] tracking-widest uppercase mb-8 font-light">Botín: {rollingTable.name}</h2>
+            
+            <div className="relative flex items-center justify-center mb-8">
+               <Hexagon size={120} className={`text-[#c1a063] ${rollingState === 'rolling' ? 'animate-[spin_0.5s_linear_infinite]' : ''}`} strokeWidth={1} />
+               <span className="absolute text-4xl font-bold text-white font-serif">{currentRollNumber}</span>
+            </div>
+
+            {rollingState === 'result' && finalItem && (
+               <div className="animate-in zoom-in duration-300 flex flex-col items-center w-full">
+                 <p className="text-[#8b7355] uppercase tracking-widest text-xs mb-2">Resultado: {finalItem.index} de {rollingTable.items.length}</p>
+                 <div className="p-4 border border-[#c1a063] bg-[#c1a063]/10 rounded w-full">
+                   <p className="text-lg text-[#e6e2da] font-serif font-bold">{finalItem.text}</p>
+                 </div>
+               </div>
+            )}
+            
+            {rollingState === 'rolling' && (
+               <p className="text-[#8b7355] italic animate-pulse">Lanzando d{rollingTable.items.length} virtual...</p>
+            )}
+            
+            {rollingState === 'result' && (
+               <button onClick={() => startLootRoll(rollingTable)} className="mt-8 px-6 py-2 bg-[#1a1614] border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors uppercase tracking-widest text-sm font-bold flex items-center gap-2">
+                 <Hexagon size={16} /> Volver a Tirar
+               </button>
+            )}
+          </div>
         </div>
       )}
 

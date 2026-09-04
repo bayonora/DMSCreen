@@ -90,7 +90,11 @@ class Store {
 
   save() {
     try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(this.state));
+      const stateToSave = {
+        ...this.state,
+        npcs: this.state.npcs.filter((n: any) => !n.isTemp)
+      };
+      localStorage.setItem(STORE_KEY, JSON.stringify(stateToSave));
     } catch (e) {
       console.error("Failed to save to localStorage. It might be full.", e);
       alert("Error al guardar: La memoria del navegador está llena. Reduce el tamaño de las imágenes.");
@@ -146,7 +150,7 @@ export const actions = {
   addPlayer: (p: Omit<Player, "id" | "type">) => {
     store.setState({ players: [...store.getState().players, { ...p, id: uuidv4(), type: "player" }] });
   },
-  updatePlayer: (id: string, p: Omit<Player, "id" | "type">) => {
+  updatePlayer: (id: string, p: Partial<Player>) => {
     store.setState({
       players: store.getState().players.map((x) => (x.id === id ? { ...x, ...p } : x)),
     });
@@ -157,7 +161,7 @@ export const actions = {
   addNPC: (n: Omit<NPC, "id" | "type">) => {
     store.setState({ npcs: [...store.getState().npcs, { ...n, id: uuidv4(), type: "npc" }] });
   },
-  updateNPC: (id: string, n: Omit<NPC, "id" | "type">) => {
+  updateNPC: (id: string, n: Partial<NPC>) => {
     store.setState({
       npcs: store.getState().npcs.map((x) => (x.id === id ? { ...x, ...n } : x)),
     });

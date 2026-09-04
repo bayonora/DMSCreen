@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useStore, actions } from "../store/useStore";
+import { useStore, actions, store } from "../store/useStore";
 import { Combatant, StatusEffect } from "../types";
 import { Input, Button, Textarea } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
@@ -86,6 +86,7 @@ export function ViewInitiative() {
           <Button onClick={() => setIsAddModalOpen(true)} className="whitespace-nowrap">
             <Plus size={14} className="mr-1" /> Añadir
           </Button>
+          
         </div>
       </div>
 
@@ -203,6 +204,7 @@ export function ViewInitiative() {
       </div>
 
       <AddCombatantModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      
       <StatusModal 
         isOpen={statusModal.open} 
         onClose={() => setStatusModal({ open: false, combatantId: "" })} 
@@ -223,16 +225,50 @@ export function ViewInitiative() {
 
 function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const { players, npcs, combatants } = useStore();
+  const [mode, setMode] = useState<"existing" | "temp">("existing");
   const [selectedId, setSelectedId] = useState("");
   const [initiative, setInitiative] = useState("");
+  
+  const [tempName, setTempName] = useState("");
+  const [tempHpMax, setTempHpMax] = useState("");
+  const [tempAc, setTempAc] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedId && initiative) {
-      actions.addCombatant(selectedId, Number(initiative));
-      onClose();
-      setSelectedId("");
+    if (mode === "existing") {
+      if (selectedId && initiative) {
+        actions.addCombatant(selectedId, Number(initiative));
+        onClose();
+        setSelectedId("");
+        setInitiative("");
+      }
+    } else {
+      if (!tempName) return;
+      const npc = {
+        name: tempName,
+        hpMax: Number(tempHpMax) || 10,
+        ac: Number(tempAc) || 10,
+        isTemp: true,
+        race: "Criatura Temporal",
+        stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+        cr: "",
+        skills: "",
+        senses: "",
+        languages: "",
+        specialTraits: "",
+        actions: ""
+      };
+      actions.addNPC(npc as any);
+      
+      const state = store.getState();
+      const newNpcId = state.npcs[state.npcs.length - 1].id;
+      actions.addCombatant(newNpcId, Number(initiative) || 0);
+      
+      setTempName("");
+      setTempHpMax("");
+      setTempAc("");
       setInitiative("");
+      onClose();
     }
   };
 
@@ -241,31 +277,58 @@ function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Añadir a Iniciativa">
+      <div className="flex space-x-4 mb-6 border-b border-[#3a302a]">
+        <button 
+          type="button"
+          className={cn("pb-2 uppercase tracking-widest text-xs font-bold transition-colors", mode === "existing" ? "text-[#c1a063] border-b-2 border-[#c1a063]" : "text-[#8b7355] hover:text-white border-b-2 border-transparent")}
+          onClick={() => setMode("existing")}
+        >
+          Existente
+        </button>
+        <button 
+          type="button"
+          className={cn("pb-2 uppercase tracking-widest text-xs font-bold transition-colors", mode === "temp" ? "text-[#c1a063] border-b-2 border-[#c1a063]" : "text-[#8b7355] hover:text-white border-b-2 border-transparent")}
+          onClick={() => setMode("temp")}
+        >
+          Nueva Temporal
+        </button>
+      </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1 w-full">
-          <label className="text-[10px] font-bold text-[#c1a063] uppercase tracking-widest">Personaje</label>
-          <select 
-            value={selectedId} 
-            onChange={(e) => setSelectedId(e.target.value)}
-            className="flex h-10 w-full bg-[#1e1a17] border border-[#3a302a] px-3 py-2 text-sm text-[#f5f2ed] focus:outline-none focus:border-[#c1a063]"
-            required
-          >
-            <option value="">Selecciona...</option>
-            {availablePlayers.length > 0 && (
-              <optgroup label="Jugadores">
-                {availablePlayers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </optgroup>
+        {mode === "existing" ? (
+          <div className="flex flex-col gap-1 w-full">
+            <label className="text-[10px] font-bold text-[#c1a063] uppercase tracking-widest">Personaje</label>
+            <select 
+              value={selectedId} 
+              onChange={(e) => setSelectedId(e.target.value)}
+              className="flex h-10 w-full bg-[#1e1a17] border border-[#3a302a] px-3 py-2 text-sm text-[#f5f2ed] focus:outline-none focus:border-[#c1a063]"
+              required={mode === "existing"}
+            >
+              <option value="">Selecciona...</option>
+              {availablePlayers.length > 0 && (
+                <optgroup label="Jugadores">
+                  {availablePlayers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </optgroup>
+              )}
+              {availableNpcs.length > 0 && (
+                <optgroup label="NPCs">
+                  {availableNpcs.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
+                </optgroup>
+              )}
+            </select>
+            {availablePlayers.length === 0 && availableNpcs.length === 0 && (
+              <p className="text-xs text-[#8a211b] mt-1">Todos los personajes ya están en la iniciativa.</p>
             )}
-            {availableNpcs.length > 0 && (
-              <optgroup label="NPCs">
-                {availableNpcs.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
-              </optgroup>
-            )}
-          </select>
-          {availablePlayers.length === 0 && availableNpcs.length === 0 && (
-            <p className="text-xs text-[#8a211b] mt-1">Todos los personajes ya están en la iniciativa.</p>
-          )}
-        </div>
+          </div>
+        ) : (
+          <>
+            <Input label="Nombre de Criatura" value={tempName} onChange={e => setTempName(e.target.value)} required={mode === "temp"} />
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="Vida Máxima (HP)" type="number" value={tempHpMax} onChange={e => setTempHpMax(e.target.value)} required={mode === "temp"} />
+              <Input label="Armadura (CA)" type="number" value={tempAc} onChange={e => setTempAc(e.target.value)} required={mode === "temp"} />
+            </div>
+          </>
+        )}
+        
         <Input 
           label="Tirada de Iniciativa" 
           type="number" 
@@ -275,7 +338,7 @@ function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =
         />
         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-[#3a302a]">
           <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" disabled={!selectedId}>Añadir</Button>
+          <Button type="submit" disabled={mode === "existing" && !selectedId}>Añadir</Button>
         </div>
       </form>
     </Modal>
@@ -446,3 +509,60 @@ function GraveyardModal({ isOpen, onClose, onViewChar }: { isOpen: boolean, onCl
   );
 }
 
+
+
+
+function AddTempCreatureModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+  const [name, setName] = useState("");
+  const [hpMax, setHpMax] = useState("");
+  const [ac, setAc] = useState("");
+  const [initiative, setInitiative] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name) return;
+    
+    const npc = {
+      name: name,
+      hpMax: Number(hpMax) || 10,
+      ac: Number(ac) || 10,
+      isTemp: true,
+      race: "Criatura Temporal",
+      stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+      cr: "",
+      skills: "",
+      senses: "",
+      languages: "",
+      specialTraits: "",
+      actions: ""
+    };
+    
+    actions.addNPC(npc as any);
+    const state = store.getState();
+    const newNpcId = state.npcs[state.npcs.length - 1].id;
+    actions.addCombatant(newNpcId, Number(initiative) || 0);
+    
+    setName("");
+    setHpMax("");
+    setAc("");
+    setInitiative("");
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Añadir Criatura Temporal">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Input label="Nombre" value={name} onChange={e => setName(e.target.value)} required />
+        <div className="grid grid-cols-2 gap-4">
+          <Input label="Vida Máxima (HP)" type="number" value={hpMax} onChange={e => setHpMax(e.target.value)} required />
+          <Input label="Clase de Armadura (CA)" type="number" value={ac} onChange={e => setAc(e.target.value)} required />
+        </div>
+        <Input label="Iniciativa (Tirada)" type="number" value={initiative} onChange={e => setInitiative(e.target.value)} required />
+        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-[#3a302a]">
+          <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button type="submit">Añadir</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

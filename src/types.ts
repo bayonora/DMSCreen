@@ -1,3 +1,9 @@
+export type CharacterTag = {
+  id: string;
+  name: string;
+  description: string;
+};
+
 export type StatBlock = {
   STR: number;
   DEX: number;
@@ -17,9 +23,11 @@ export type Player = {
   ac: number;
   stats: StatBlock;
   passivePerception: number;
+  tags?: CharacterTag[];
 };
 
 export type NPC = {
+  isTemp?: boolean;
   id: string;
   type: "npc";
   name: string;
@@ -33,6 +41,7 @@ export type NPC = {
   languages: string;
   specialTraits: string;
   actions: string;
+  tags?: CharacterTag[];
 };
 
 export type Character = Player | NPC;

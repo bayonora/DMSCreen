@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Modal } from './ui/Modal';
 
@@ -29,6 +29,32 @@ export function CalculatorModal({ isOpen, onClose }: { isOpen: boolean, onClose:
     setExpression('');
     setResult(null);
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent default behavior for Enter/Space to stop triggering focused buttons
+      const key = e.key;
+
+      if (/^[0-9+\-*./]$/.test(key)) { e.preventDefault();
+        handleInput(key);
+      } else if (key === 'Enter' || key === '=') {
+        e.preventDefault();
+        calculate();
+      } else if (key === 'Backspace') { e.preventDefault();
+        setExpression(prev => prev.slice(0, -1));
+        setResult(null);
+      } else if (key === 'Escape' || key.toLowerCase() === 'c') {
+        if (key.toLowerCase() === 'c') { e.preventDefault();
+          clear();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, expression]);
 
   if (!isOpen) return null;
 

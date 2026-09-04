@@ -9,7 +9,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 
 export function ViewParty() {
-  const { players, npcs } = useStore();
+  const { players, npcs: allNpcs } = useStore();
+  const npcs = allNpcs.filter(n => !n.isTemp);
   const [tab, setTab] = useState<"players" | "npcs">("players");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChar, setEditingChar] = useState<Character | null>(null);
