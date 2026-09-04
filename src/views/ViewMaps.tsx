@@ -53,6 +53,8 @@ export function ViewMaps() {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
           actions.importMaps(parsed);
+        } else if (parsed && parsed.maps && Array.isArray(parsed.maps)) {
+          actions.importMaps(parsed.maps);
         } else {
           alert("Formato de mapas incorrecto.");
         }
@@ -73,6 +75,8 @@ export function ViewMaps() {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
           actions.importLocations(parsed);
+        } else if (parsed && parsed.locations && Array.isArray(parsed.locations)) {
+          actions.importLocations(parsed.locations);
         } else {
           alert("Formato de lugares incorrecto.");
         }

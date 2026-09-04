@@ -59,6 +59,8 @@ export type Combatant = {
   initiative: number;
   hpCurrent: number;
   statuses: StatusEffect[];
+  isTemp?: boolean;
+  tempData?: NPC;
 };
 
 export type LocationData = {
@@ -111,4 +113,26 @@ export type LootTable = {
   id: string;
   name: string;
   items: string[];
+};
+
+export type QuestStatus = "active" | "completed" | "failed";
+
+export type Quest = {
+  id: string;
+  title: string;
+  description: string;
+  location?: string;
+  reward?: string;
+  image?: string; // base64
+  parentId: string | null;
+  status: QuestStatus;
+  createdAt: number;
+  details?: QuestDetail[];
+};
+
+export type QuestDetail = {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: number;
 };

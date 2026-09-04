@@ -14,15 +14,17 @@ export function ViewInitiative() {
   const { combatants, graveyard, players, npcs, uiState } = useStore();
   
   const isCombatActive = uiState?.combatActive || false;
-  const activeTurnIdx = uiState?.currentTurn || 0;
+  const activeCombatantId = uiState?.activeCombatantId || null;
+  let activeTurnIdx = combatants.findIndex(c => c.id === activeCombatantId);
+  if (activeTurnIdx === -1) activeTurnIdx = 0;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isGraveyardOpen, setIsGraveyardOpen] = useState(false);
   const [statusModal, setStatusModal] = useState<{ open: boolean; combatantId: string; effect?: StatusEffect }>({ open: false, combatantId: "" });
-  const [viewCharModal, setViewCharModal] = useState<{ open: boolean; charId: string }>({ open: false, charId: "" });
+  const [viewCharModal, setViewCharModal] = useState<{ open: boolean; char?: any }>({ open: false });
 
   const handleStartCombat = () => {
-    actions.updateUI({ combatActive: true, currentTurn: 0 });
+    actions.updateUI({ combatActive: true, activeCombatantId: combatants[0]?.id || null });
   };
 
   const handleNextTurn = () => {
@@ -50,11 +52,12 @@ export function ViewInitiative() {
       actions.updateCombatant(currentCombatant.id, { statuses: updatedStatuses });
     }
 
-    actions.updateUI({ currentTurn: (activeTurnIdx + 1) % combatants.length });
+    const nextIndex = (activeTurnIdx + 1) % combatants.length;
+    actions.updateUI({ activeCombatantId: combatants[nextIndex]?.id || null });
   };
 
   const handleEndCombat = () => {
-    actions.updateUI({ combatActive: false, currentTurn: 0 });
+    actions.updateUI({ combatActive: false, activeCombatantId: null });
   };
 
   return (
@@ -95,7 +98,7 @@ export function ViewInitiative() {
         <div className="flex flex-col">
           <AnimatePresence>
             {combatants.map((c, idx) => {
-              const char = actions.getCharacter(c.characterId);
+              const char = (c.isTemp && c.tempData) ? c.tempData : actions.getCharacter(c.characterId);
               if (!char) return null;
               const isActive = isCombatActive && idx === activeTurnIdx;
               
@@ -125,7 +128,7 @@ export function ViewInitiative() {
                     <div className="flex-1 flex flex-col min-w-0 gap-1">
                       <div className="flex items-center flex-wrap gap-2">
                         <button 
-                          onClick={() => setViewCharModal({ open: true, charId: c.characterId })}
+                          onClick={() => setViewCharModal({ open: true, char })}
                           className={cn("font-bold text-lg text-left truncate transition-colors", isActive ? "text-[#f5f2ed]" : "text-[#f5f2ed] opacity-80", "hover:text-[#c1a063]")}
                         >
                           {char.name}
@@ -211,11 +214,11 @@ export function ViewInitiative() {
         combatantId={statusModal.combatantId}
         effect={statusModal.effect}
       />
-      <GraveyardModal isOpen={isGraveyardOpen} onClose={() => setIsGraveyardOpen(false)} onViewChar={(id) => setViewCharModal({ open: true, charId: id })} />
-      <Modal isOpen={viewCharModal.open} onClose={() => setViewCharModal({ open: false, charId: "" })} title="Ficha">
-         {viewCharModal.charId && actions.getCharacter(viewCharModal.charId) && (
+      <GraveyardModal isOpen={isGraveyardOpen} onClose={() => setIsGraveyardOpen(false)} onViewChar={(char) => setViewCharModal({ open: true, char })} />
+      <Modal isOpen={viewCharModal.open} onClose={() => setViewCharModal({ open: false })} title="Ficha">
+         {viewCharModal.char && (
            <div className="flex justify-center">
-             <StatBlock character={actions.getCharacter(viewCharModal.charId)!} />
+             <StatBlock character={viewCharModal.char} />
            </div>
          )}
       </Modal>
@@ -258,11 +261,7 @@ function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =
         specialTraits: "",
         actions: ""
       };
-      actions.addNPC(npc as any);
-      
-      const state = store.getState();
-      const newNpcId = state.npcs[state.npcs.length - 1].id;
-      actions.addCombatant(newNpcId, Number(initiative) || 0);
+      actions.addTempCombatant(npc, Number(initiative) || 0);
       
       setTempName("");
       setTempHpMax("");
@@ -467,7 +466,7 @@ function StatusModal({ isOpen, onClose, combatantId, effect }: { isOpen: boolean
   );
 }
 
-function GraveyardModal({ isOpen, onClose, onViewChar }: { isOpen: boolean, onClose: () => void, onViewChar: (id: string) => void }) {
+function GraveyardModal({ isOpen, onClose, onViewChar }: { isOpen: boolean, onClose: () => void, onViewChar: (char: any) => void }) {
   const { graveyard } = useStore();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -475,12 +474,12 @@ function GraveyardModal({ isOpen, onClose, onViewChar }: { isOpen: boolean, onCl
     <Modal isOpen={isOpen} onClose={onClose} title="Cementerio (Historial)">
       <div className="flex flex-col gap-2">
         {graveyard.map(c => {
-          const char = actions.getCharacter(c.characterId);
+          const char = (c.isTemp && c.tempData) ? c.tempData : actions.getCharacter(c.characterId);
           if (!char) return null;
           return (
             <div key={c.id} className="flex items-center justify-between p-3 bg-[#1e1a17] border border-[#3a302a] rounded-sm shadow-md">
               <div>
-                <button onClick={() => { onViewChar(c.characterId); onClose(); }} className="font-bold hover:text-[#c1a063] truncate max-w-[200px] text-[#e6e2da]">
+                <button onClick={() => { onViewChar(char); onClose(); }} className="font-bold hover:text-[#c1a063] truncate max-w-[200px] text-[#e6e2da]">
                   {char.name}
                 </button>
                 <div className="text-[10px] uppercase text-[#c1a063] opacity-60">HP al morir: {c.hpCurrent}</div>
@@ -512,57 +511,3 @@ function GraveyardModal({ isOpen, onClose, onViewChar }: { isOpen: boolean, onCl
 
 
 
-function AddTempCreatureModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
-  const [name, setName] = useState("");
-  const [hpMax, setHpMax] = useState("");
-  const [ac, setAc] = useState("");
-  const [initiative, setInitiative] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name) return;
-    
-    const npc = {
-      name: name,
-      hpMax: Number(hpMax) || 10,
-      ac: Number(ac) || 10,
-      isTemp: true,
-      race: "Criatura Temporal",
-      stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
-      cr: "",
-      skills: "",
-      senses: "",
-      languages: "",
-      specialTraits: "",
-      actions: ""
-    };
-    
-    actions.addNPC(npc as any);
-    const state = store.getState();
-    const newNpcId = state.npcs[state.npcs.length - 1].id;
-    actions.addCombatant(newNpcId, Number(initiative) || 0);
-    
-    setName("");
-    setHpMax("");
-    setAc("");
-    setInitiative("");
-    onClose();
-  };
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Añadir Criatura Temporal">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Input label="Nombre" value={name} onChange={e => setName(e.target.value)} required />
-        <div className="grid grid-cols-2 gap-4">
-          <Input label="Vida Máxima (HP)" type="number" value={hpMax} onChange={e => setHpMax(e.target.value)} required />
-          <Input label="Clase de Armadura (CA)" type="number" value={ac} onChange={e => setAc(e.target.value)} required />
-        </div>
-        <Input label="Iniciativa (Tirada)" type="number" value={initiative} onChange={e => setInitiative(e.target.value)} required />
-        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-[#3a302a]">
-          <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button type="submit">Añadir</Button>
-        </div>
-      </form>
-    </Modal>
-  );
-}

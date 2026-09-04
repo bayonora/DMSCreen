@@ -9,19 +9,24 @@ import { ViewInitiative } from "./views/ViewInitiative";
 import { ViewMaps } from "./views/ViewMaps";
 import { ViewShops } from "./views/ViewShops";
 import { ViewNotes } from "./views/ViewNotes";
+import { ViewQuests } from "./views/ViewQuests";
 import { ViewItems } from "./views/ViewItems";
 import { cn } from "./lib/utils";
-import { Users, Swords, Map as MapIcon, Store as StoreIcon, Settings, Download, Upload, X, StickyNote, Backpack, Calculator } from "lucide-react";
+import { Users, Swords, Map as MapIcon, Store as StoreIcon, Settings, Download, Upload, X, StickyNote, Backpack, Calculator, Target } from "lucide-react";
 import { store } from "./store/useStore";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalculatorModal } from "./components/CalculatorModal";
+import { WelcomeModal, FullTutorialModal } from "./components/Tutorial";
+import { GlobalSearch } from "./components/GlobalSearch";
+import { Info } from "lucide-react";
 
-type Tab = "party" | "initiative" | "maps" | "shops" | "notes" | "items";
+type Tab = "party" | "initiative" | "quests" | "maps" | "shops" | "notes" | "items";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>("party");
   const [showSettings, setShowSettings] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [saveIndicator, setSaveIndicator] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,6 +69,7 @@ export default function App() {
     switch (activeTab) {
       case "party": return <ViewParty />;
       case "initiative": return <ViewInitiative />;
+      case "quests": return <ViewQuests />;
       case "maps": return <ViewMaps />;
       case "shops": return <ViewShops />;
       case "notes": return <ViewNotes />;
@@ -83,6 +89,7 @@ export default function App() {
             <span className="-rotate-45 font-bold text-xl text-[#c1a063] font-display">DM</span>
           </div>
         </div>
+        <div className="flex-1 flex justify-center px-4 max-w-lg hidden sm:flex"><GlobalSearch onNavigate={setActiveTab} /></div>
         <div className="flex items-center space-x-2">
           {saveIndicator && (
             <span className="text-[10px] text-[#c1a063] uppercase tracking-widest animate-in fade-in mr-2 opacity-70">
@@ -95,6 +102,13 @@ export default function App() {
             title="Calculadora"
           >
             <Calculator size={24} />
+          </button>
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="p-2 text-[#8b7355] hover:text-[#c1a063] transition-colors"
+            title="Ayuda / Tutorial"
+          >
+            <Info size={24} />
           </button>
           <button 
             onClick={() => setShowSettings(true)}
@@ -124,6 +138,7 @@ export default function App() {
       <nav className="flex-none flex justify-start sm:justify-center bg-[#0a0a09] border-t border-[#3a302a] py-2 px-4 sm:px-6 pb-safe z-20 space-x-1 sm:space-x-4 overflow-x-auto custom-scrollbar">
         <NavButton active={activeTab === "party"} onClick={() => setActiveTab("party")} label="Grupo" icon={Users} />
         <NavButton active={activeTab === "initiative"} onClick={() => setActiveTab("initiative")} label="Iniciativa" icon={Swords} />
+        <NavButton active={activeTab === "quests"} onClick={() => setActiveTab("quests")} label="Misiones" icon={Target} />
         <NavButton active={activeTab === "maps"} onClick={() => setActiveTab("maps")} label="Mapas" icon={MapIcon} />
         <NavButton active={activeTab === "shops"} onClick={() => setActiveTab("shops")} label="Tiendas" icon={StoreIcon} />
         <NavButton active={activeTab === "notes"} onClick={() => setActiveTab("notes")} label="Notas" icon={StickyNote} />
@@ -175,6 +190,8 @@ export default function App() {
       )}
       
       <CalculatorModal isOpen={showCalculator} onClose={() => setShowCalculator(false)} />
+      <WelcomeModal />
+      <FullTutorialModal isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
     </div>
   );
 }

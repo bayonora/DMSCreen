@@ -56,7 +56,7 @@ export function ViewParty() {
           const parsed = JSON.parse(result);
           if (parsed.players !== undefined || parsed.npcs !== undefined) {
             if (parsed.players !== undefined) store.setState({ players: parsed.players });
-            if (parsed.npcs !== undefined) store.setState({ npcs: parsed.npcs });
+            if (parsed.npcs !== undefined) store.setState({ npcs: parsed.npcs.filter((n: any) => !n.isTemp) });
           } else {
              // Maybe they are importing a backup with everything, that's handled by global settings.
              // If they just imported an array here by mistake, we don't know if it's players or npcs.

@@ -59,17 +59,20 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
 );
 Textarea.displayName = "Textarea";
 
-export const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger" | "ghost" }>(
-  ({ className, variant = "primary", ...props }, ref) => {
+export const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger" | "ghost", size?: "sm" | "md" | "lg" }>( 
+  ({ className, variant = "primary", size = "md", ...props }, ref) => {
     return (
       <button
         ref={ref}
         className={cn(
           "inline-flex items-center justify-center transition-all focus:outline-none disabled:opacity-50 disabled:pointer-events-none text-xs uppercase tracking-widest cursor-pointer shadow-sm rounded-none border",
           {
-            "bg-[#c1a063] border-[#c1a063] text-[#0f0d0c] hover:bg-[#d4b57a] px-4 py-2 font-bold": variant === "primary",
-            "bg-[#1a1614] border-[#3a302a] text-[#8b7355] hover:text-[#c1a063] hover:border-[#c1a063] hover:bg-[#2a2420] px-4 py-2": variant === "secondary",
-            "bg-[#8a211b] border-[#8a211b] text-white hover:bg-[#a52a23] hover:border-[#a52a23] px-4 py-2 font-bold": variant === "danger",
+            "bg-[#c1a063] border-[#c1a063] text-[#0f0d0c] hover:bg-[#d4b57a] font-bold": variant === "primary",
+            "px-2 py-1 text-[10px]": size === "sm",
+            "px-4 py-2": size === "md",
+            "px-6 py-3 text-sm": size === "lg",
+            "bg-[#1a1614] border-[#3a302a] text-[#8b7355] hover:text-[#c1a063] hover:border-[#c1a063] hover:bg-[#2a2420]": variant === "secondary",
+            "bg-[#8a211b] border-[#8a211b] text-white hover:bg-[#a52a23] hover:border-[#a52a23] font-bold": variant === "danger",
             "bg-transparent border-transparent text-[#8b7355] hover:bg-[#1a1614] hover:text-[#c1a063] hover:border-[#3a302a] px-4 py-2 shadow-none": variant === "ghost",
           },
           className

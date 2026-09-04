@@ -4,7 +4,7 @@ import { useStore, actions, store } from "../store/useStore";
 import { Plus, X, Download, Upload, Image as ImageIcon, Hexagon } from "lucide-react";
 import { CustomItem, LootTable } from "../types";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
-import { cn } from "../lib/utils";
+import { cn, compressImage } from "../lib/utils";
 
 export function ViewItems() {
   const { customItems, lootTables } = useStore();
@@ -107,14 +107,15 @@ export function ViewItems() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editingItem) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setEditingItem({ ...editingItem, image: event.target?.result as string });
-    };
-    reader.readAsDataURL(file);
+    try {
+      const base64 = await compressImage(file, 800);
+      setEditingItem({ ...editingItem, image: base64 });
+    } catch (err) {
+      console.error("Error compressing image", err);
+    }
   };
 
   return (
