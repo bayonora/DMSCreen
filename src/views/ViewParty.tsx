@@ -7,6 +7,7 @@ import { Character, Player, NPC } from "../types";
 import { Plus, Download, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
+import { ImportModal } from "../components/ImportModal";
 
 export function ViewParty() {
   const { players, npcs: allNpcs, creatures: allCreatures } = useStore();
@@ -16,6 +17,7 @@ export function ViewParty() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChar, setEditingChar] = useState<Character | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<any>(null);
 
   const openNew = () => {
     setEditingChar(null);
@@ -65,14 +67,13 @@ export function ViewParty() {
       if (typeof result === "string") {
         try {
           const parsed = JSON.parse(result);
-          if (parsed.players !== undefined || parsed.npcs !== undefined || parsed.creatures !== undefined) {
-            if (parsed.players !== undefined) store.setState({ players: parsed.players });
-            if (parsed.npcs !== undefined) store.setState({ npcs: parsed.npcs.filter((n: any) => !n.isTemp) });
-            if (parsed.creatures !== undefined) store.setState({ creatures: parsed.creatures.filter((c: any) => !c.isTemp) });
+          if (Array.isArray(parsed)) {
+            setPendingImport(parsed);
+          } else if (parsed.players !== undefined || parsed.npcs !== undefined || parsed.creatures !== undefined) {
+             // Legacy full import
+             setPendingImport(parsed);
           } else {
-             // Maybe they are importing a backup with everything, that's handled by global settings.
-             // If they just imported an array here by mistake, we don't know if it's players or npcs.
-             alert("El archivo no parece ser una exportación de Grupo válida.");
+             alert(`El archivo no parece ser una exportación de ${tab === "players" ? "Jugadores" : tab === "npcs" ? "NPCs" : "Criaturas"} válida.`);
           }
         } catch (err) {
           alert("Archivo inválido.");
@@ -83,12 +84,57 @@ export function ViewParty() {
     e.target.value = '';
   };
 
+  const confirmImport = (mode: "merge" | "overwrite") => {
+    if (!pendingImport) return;
+    
+    // Legacy support for multi-category object
+    if (!Array.isArray(pendingImport) && (pendingImport.players || pendingImport.npcs || pendingImport.creatures)) {
+      if (mode === "overwrite") {
+        if (pendingImport.players !== undefined) store.setState({ players: pendingImport.players });
+        if (pendingImport.npcs !== undefined) store.setState({ npcs: pendingImport.npcs.filter((n: any) => !n.isTemp) });
+        if (pendingImport.creatures !== undefined) store.setState({ creatures: pendingImport.creatures.filter((c: any) => !c.isTemp) });
+      } else {
+        const state = store.getState();
+        if (pendingImport.players !== undefined) store.setState({ players: [...state.players, ...pendingImport.players] });
+        if (pendingImport.npcs !== undefined) store.setState({ npcs: [...state.npcs, ...pendingImport.npcs.filter((n: any) => !n.isTemp)] });
+        if (pendingImport.creatures !== undefined) store.setState({ creatures: [...(state.creatures || []), ...pendingImport.creatures.filter((c: any) => !c.isTemp)] });
+      }
+    } else {
+      // Modular array support
+      const arrayData = Array.isArray(pendingImport) ? pendingImport : [];
+      if (tab === "players") {
+        if (mode === "overwrite") store.setState({ players: arrayData });
+        else store.setState({ players: [...store.getState().players, ...arrayData] });
+      } else if (tab === "npcs") {
+        const validData = arrayData.filter((n: any) => !n.isTemp);
+        if (mode === "overwrite") store.setState({ npcs: validData });
+        else store.setState({ npcs: [...store.getState().npcs, ...validData] });
+      } else {
+        const validData = arrayData.filter((c: any) => !c.isTemp);
+        if (mode === "overwrite") store.setState({ creatures: validData });
+        else store.setState({ creatures: [...(store.getState().creatures || []), ...validData] });
+      }
+    }
+    setPendingImport(null);
+  };
+
   const exportData = () => {
-    const data = { players, npcs, creatures };
+    let data;
+    let filename;
+    if (tab === "players") {
+      data = players;
+      filename = "ndms_jugadores.json";
+    } else if (tab === "npcs") {
+      data = npcs;
+      filename = "ndms_npcs.json";
+    } else {
+      data = creatures;
+      filename = "ndms_criaturas.json";
+    }
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "dm_screen_party.json");
+    downloadAnchorNode.setAttribute("download", filename);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -110,11 +156,11 @@ export function ViewParty() {
         </div>
         <div className="flex gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
           <label className="cursor-pointer px-3 sm:px-4 py-2 bg-[#1a1614] border border-[#3a302a] text-[#8b7355] text-xs uppercase tracking-widest hover:bg-[#2a2420] hover:border-[#c1a063] hover:text-[#c1a063] inline-flex items-center justify-center transition-all shadow-sm rounded-none whitespace-nowrap">
-            <Download size={14} className="mr-2" /> Importar
+            <Download size={14} className="mr-2" /> Importar {tab === "players" ? "Jugadores" : tab === "npcs" ? "NPCs" : "Criaturas"}
             <input type="file" accept=".json" className="hidden" onChange={importData} />
           </label>
           <Button variant="secondary" onClick={exportData} className="whitespace-nowrap">
-            <Upload size={14} className="mr-2" /> Exportar
+            <Upload size={14} className="mr-2" /> Exportar {tab === "players" ? "Jugadores" : tab === "npcs" ? "NPCs" : "Criaturas"}
           </Button>
           <Button onClick={openNew} className="whitespace-nowrap">
             <Plus size={14} className="mr-2" /> Añadir
@@ -169,6 +215,12 @@ export function ViewParty() {
         onConfirm={confirmDelete}
         title="Eliminar Personaje"
         message="¿Estás seguro de que quieres eliminar a este personaje de forma permanente?"
+      />
+      <ImportModal
+        isOpen={!!pendingImport}
+        onClose={() => setPendingImport(null)}
+        onMerge={() => confirmImport("merge")}
+        onOverwrite={() => confirmImport("overwrite")}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import { useStore, actions, store } from "../store/useStore";
 import { Plus, X, Download, Upload, Palette, Edit2, Trash2 } from "lucide-react";
 import { Note } from "../types";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
+import { ImportModal } from "../components/ImportModal";
 
 const COLORS = [
   "bg-[#2a2420]", // Default Dark
@@ -23,6 +24,7 @@ export function ViewNotes() {
   const setEditingNote = (note: Partial<Note> | null) => actions.updateUI({ draftNote: note });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewingNote, setViewingNote] = useState<Note | null>(null);
+  const [pendingImport, setPendingImport] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = (e: React.FormEvent) => {
@@ -41,7 +43,7 @@ export function ViewNotes() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes || []));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "dm_screen_notes.json");
+    downloadAnchorNode.setAttribute("download", "ndms_notas.json");
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -55,9 +57,9 @@ export function ViewNotes() {
       try {
         const imported = JSON.parse(event.target?.result as string);
         if (Array.isArray(imported)) {
-          store.setState({ notes: imported });
+          setPendingImport(imported);
         } else if (imported && imported.notes && Array.isArray(imported.notes)) {
-          store.setState({ notes: imported.notes });
+          setPendingImport(imported.notes);
         } else {
           alert("El archivo no parece contener notas válidas.");
         }
@@ -69,6 +71,16 @@ export function ViewNotes() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const confirmImport = (mode: "merge" | "overwrite") => {
+    if (!pendingImport) return;
+    if (mode === "overwrite") {
+      store.setState({ notes: pendingImport });
+    } else {
+      store.setState({ notes: [...(store.getState().notes || []), ...pendingImport] });
+    }
+    setPendingImport(null);
+  };
+
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in duration-300">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
@@ -77,15 +89,13 @@ export function ViewNotes() {
           <button
             onClick={() => fileInputRef.current?.click()}
             className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors shrink-0"
-            title="Importar Notas"
-          >
+            title="Importar Notas">
             <Download size={18} />
           </button>
           <button
             onClick={handleExport}
             className="p-2 border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors shrink-0"
-            title="Exportar Notas"
-          >
+            title="Exportar Notas">
             <Upload size={18} />
           </button>
           <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImport} />
@@ -246,6 +256,12 @@ export function ViewNotes() {
         onConfirm={() => deleteId && actions.deleteNote(deleteId)}
         title="Eliminar Nota"
         message="¿Estás seguro de que quieres eliminar esta nota de tu panel?"
+      />
+      <ImportModal
+        isOpen={!!pendingImport}
+        onClose={() => setPendingImport(null)}
+        onMerge={() => confirmImport("merge")}
+        onOverwrite={() => confirmImport("overwrite")}
       />
     </div>
   );

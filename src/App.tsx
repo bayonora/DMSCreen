@@ -20,6 +20,7 @@ import { WelcomeModal, FullTutorialModal } from "./components/Tutorial";
 import { GlobalSearch } from "./components/GlobalSearch";
 import { Info } from "lucide-react";
 import { TitleTorch } from "./components/TitleTorch";
+import { ImportModal } from "./components/ImportModal";
 
 type Tab = "party" | "initiative" | "quests" | "maps" | "shops" | "notes" | "items";
 
@@ -28,6 +29,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [pendingImport, setPendingImport] = useState<string | null>(null);
   const [saveIndicator, setSaveIndicator] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,7 +57,7 @@ export default function App() {
     reader.onload = (event) => {
       const content = event.target?.result as string;
       if (content) {
-        store.importData(content);
+        setPendingImport(content);
         setShowSettings(false);
       }
     };
@@ -63,6 +65,13 @@ export default function App() {
     // reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const confirmImport = (mode: "merge" | "overwrite") => {
+    if (pendingImport) {
+      store.importData(pendingImport, mode);
+      setPendingImport(null);
     }
   };
 
@@ -165,7 +174,7 @@ export default function App() {
                 onClick={() => { store.exportData(); setShowSettings(false); }}
                 className="flex items-center justify-center space-x-3 w-full p-4 border border-[#3a302a] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors group"
               >
-                <Upload size={20} className="text-[#8b7355] group-hover:text-[#c1a063]" />
+                <Download size={20} className="text-[#8b7355] group-hover:text-[#c1a063]" />
                 <span className="uppercase tracking-wider text-sm">Exportar Todo</span>
               </button>
               
@@ -173,7 +182,7 @@ export default function App() {
                 onClick={handleImportClick}
                 className="flex items-center justify-center space-x-3 w-full p-4 border border-[#3a302a] hover:border-[#c1a063] hover:text-[#c1a063] transition-colors group"
               >
-                <Download size={20} className="text-[#8b7355] group-hover:text-[#c1a063]" />
+                <Upload size={20} className="text-[#8b7355] group-hover:text-[#c1a063]" />
                 <span className="uppercase tracking-wider text-sm">Importar Datos</span>
               </button>
               <input 
@@ -194,6 +203,12 @@ export default function App() {
       <CalculatorModal isOpen={showCalculator} onClose={() => setShowCalculator(false)} />
       <WelcomeModal />
       <FullTutorialModal isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
+      <ImportModal
+        isOpen={!!pendingImport}
+        onClose={() => setPendingImport(null)}
+        onMerge={() => confirmImport("merge")}
+        onOverwrite={() => confirmImport("overwrite")}
+      />
     </div>
   );
 }

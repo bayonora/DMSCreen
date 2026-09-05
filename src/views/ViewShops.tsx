@@ -1,11 +1,12 @@
 import React, { useState, useRef } from "react";
-import { useStore, actions } from "../store/useStore";
+import { store, useStore, actions } from "../store/useStore";
 import { Modal } from "../components/ui/Modal";
 import { Button, Input, Textarea } from "../components/ui/Input";
 import { Shop, ShopItem } from "../types";
 import { Plus, Trash2, Edit2, Store as StoreIcon, EyeOff, Eye, Image as ImageIcon, Upload, Download } from "lucide-react";
 import { compressImage, cn } from "../lib/utils";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
+import { ImportModal } from "../components/ImportModal";
 
 export function ViewShops() {
   const { shops } = useStore();
@@ -13,6 +14,7 @@ export function ViewShops() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editShopData, setEditShopData] = useState<Shop | null>(null);
   const [deleteShopId, setDeleteShopId] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<any>(null);
 
   const selectedShop = shops.find((s) => s.id === selectedShopId);
 
@@ -33,7 +35,7 @@ export function ViewShops() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(shops));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "dm_screen_shops.json");
+    downloadAnchorNode.setAttribute("download", "ndms_tiendas.json");
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -47,9 +49,9 @@ export function ViewShops() {
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
-          store.setState({ shops: parsed });
+          setPendingImport(parsed);
         } else if (parsed && parsed.shops && Array.isArray(parsed.shops)) {
-          store.setState({ shops: parsed.shops });
+          setPendingImport(parsed.shops);
         } else {
           alert("El archivo no parece contener tiendas válidas.");
         }
@@ -59,6 +61,16 @@ export function ViewShops() {
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const confirmImport = (mode: "merge" | "overwrite") => {
+    if (!pendingImport) return;
+    if (mode === "overwrite") {
+      store.setState({ shops: pendingImport });
+    } else {
+      store.setState({ shops: [...(store.getState().shops || []), ...pendingImport] });
+    }
+    setPendingImport(null);
   };
 
   return (
@@ -71,10 +83,10 @@ export function ViewShops() {
           <div className="flex gap-2">
             <input type="file" accept=".json" className="hidden" ref={fileInputRef} onChange={handleImport} />
             <Button variant="ghost" onClick={() => fileInputRef.current?.click()} className="hidden sm:flex border border-[#3a302a]" title="Importar Tiendas">
-              <Upload size={14} className="mr-1" /> Importar
+              <Download size={14} className="mr-1" /> Importar
             </Button>
             <Button variant="ghost" onClick={exportShops} className="hidden sm:flex border border-[#3a302a]" title="Exportar Tiendas">
-              <Download size={14} className="mr-1" /> Exportar
+              <Upload size={14} className="mr-1" /> Exportar
             </Button>
             <Button onClick={() => { setEditShopData(null); setIsAddOpen(true); }} className="whitespace-nowrap shrink-0 bg-[#1a1614] border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063]">
               <Plus size={14} className="mr-1" /> Nueva Tienda

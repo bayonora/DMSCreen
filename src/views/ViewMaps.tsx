@@ -1,11 +1,12 @@
 import React, { useState, useRef } from "react";
-import { useStore, actions } from "../store/useStore";
+import { store, useStore, actions } from "../store/useStore";
 import { Modal } from "../components/ui/Modal";
 import { Button, Input, Textarea } from "../components/ui/Input";
 import { compressImage } from "../lib/utils";
 import { Plus, Trash2, Maximize2, Image as ImageIcon, MapPin, Edit2, Download, Upload } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
+import { ImportModal } from "../components/ImportModal";
 import { LocationData } from "../types";
 
 export function ViewMaps() {
@@ -19,7 +20,8 @@ export function ViewMaps() {
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
   const [editMapData, setEditMapData] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-
+  const [pendingImport, setPendingImport] = useState<any>(null);
+  const [pendingImportType, setPendingImportType] = useState<"maps" | "locations" | null>(null);
   
   const importMapsRef = useRef<HTMLInputElement>(null);
   const importLocsRef = useRef<HTMLInputElement>(null);
@@ -28,7 +30,7 @@ export function ViewMaps() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(maps));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "mapas_dnd.json");
+    downloadAnchorNode.setAttribute("download", "ndms_mapas.json");
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -38,7 +40,7 @@ export function ViewMaps() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(locations));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "lugares_dnd.json");
+    downloadAnchorNode.setAttribute("download", "ndms_lugares.json");
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -52,9 +54,11 @@ export function ViewMaps() {
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
-          actions.importMaps(parsed);
+          setPendingImportType("maps");
+          setPendingImport(parsed);
         } else if (parsed && parsed.maps && Array.isArray(parsed.maps)) {
-          actions.importMaps(parsed.maps);
+          setPendingImportType("maps");
+          setPendingImport(parsed.maps);
         } else {
           alert("Formato de mapas incorrecto.");
         }
@@ -74,9 +78,11 @@ export function ViewMaps() {
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
-          actions.importLocations(parsed);
+          setPendingImportType("locations");
+          setPendingImport(parsed);
         } else if (parsed && parsed.locations && Array.isArray(parsed.locations)) {
-          actions.importLocations(parsed.locations);
+          setPendingImportType("locations");
+          setPendingImport(parsed.locations);
         } else {
           alert("Formato de lugares incorrecto.");
         }
@@ -86,6 +92,26 @@ export function ViewMaps() {
     };
     reader.readAsText(file);
     e.target.value = "";
+  };
+
+  const confirmImport = (mode: "merge" | "overwrite") => {
+    if (!pendingImport) return;
+    
+    if (pendingImportType === "maps") {
+      if (mode === "overwrite") {
+        store.setState({ maps: pendingImport });
+      } else {
+        store.setState({ maps: [...(store.getState().maps || []), ...pendingImport] });
+      }
+    } else if (pendingImportType === "locations") {
+      if (mode === "overwrite") {
+        store.setState({ locations: pendingImport });
+      } else {
+        store.setState({ locations: [...(store.getState().locations || []), ...pendingImport] });
+      }
+    }
+    setPendingImport(null);
+    setPendingImportType(null);
   };
 
   const selectedMap = maps.find((m) => m.id === selectedMapId);
@@ -267,6 +293,12 @@ export function ViewMaps() {
         onConfirm={() => { if (deleteLocationId) { actions.deleteLocation(deleteLocationId); setSelectedLocationId(null); } }}
         title="Eliminar Lugar"
         message="¿Estás seguro de que quieres eliminar este lugar de forma permanente?"
+      />
+      <ImportModal
+        isOpen={!!pendingImport}
+        onClose={() => setPendingImport(null)}
+        onMerge={() => confirmImport("merge")}
+        onOverwrite={() => confirmImport("overwrite")}
       />
     </div>
   );

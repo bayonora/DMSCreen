@@ -4,10 +4,12 @@ import { useStore, actions, store } from "../store/useStore";
 import { Plus, X, Download, Upload, Image as ImageIcon, Hexagon, ChevronDown, ChevronUp } from "lucide-react";
 import { CustomItem, LootTable } from "../types";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
+import { ImportModal } from "../components/ImportModal";
 import { cn, compressImage } from "../lib/utils";
 
 export function ViewItems() {
   const { customItems, lootTables } = useStore();
+  const [pendingImport, setPendingImport] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"items" | "loot">("items");
   const [editingItem, setEditingItem] = useState<CustomItem | null>(null);
   const [editingTable, setEditingTable] = useState<{ id: string; name: string; rawText: string } | null>(null);
@@ -75,7 +77,7 @@ export function ViewItems() {
 
   const handleExport = () => {
     const data = activeTab === "items" ? (customItems || []) : (lootTables || []);
-    const fileName = activeTab === "items" ? "dm_screen_items.json" : "dm_screen_loottables.json";
+    const fileName = activeTab === "items" ? "ndms_objetos.json" : "ndms_tablas.json";
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -93,11 +95,11 @@ export function ViewItems() {
       try {
         const imported = JSON.parse(event.target?.result as string);
         if (Array.isArray(imported)) {
-          if (activeTab === "items") store.setState({ customItems: imported });
-          else store.setState({ lootTables: imported });
+          if (activeTab === "items") setPendingImport(imported);
+          else setPendingImport(imported);
         } else if (imported && ((activeTab === "items" && imported.customItems) || (activeTab === "loot" && imported.lootTables))) {
-          if (activeTab === "items") store.setState({ customItems: imported.customItems });
-          else store.setState({ lootTables: imported.lootTables });
+          if (activeTab === "items") setPendingImport(imported.customItems);
+          else setPendingImport(imported.lootTables);
         } else {
            alert("El archivo no parece contener datos válidos para esta sección.");
         }
@@ -108,6 +110,25 @@ export function ViewItems() {
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const confirmImport = (mode: "merge" | "overwrite") => {
+    if (!pendingImport) return;
+    if (activeTab === "items") {
+      if (mode === "overwrite") {
+        store.setState({ customItems: pendingImport });
+      } else {
+        store.setState({ customItems: [...(store.getState().customItems || []), ...pendingImport] });
+      }
+    } else {
+      if (mode === "overwrite") {
+        store.setState({ lootTables: pendingImport });
+      } else {
+        store.setState({ lootTables: [...(store.getState().lootTables || []), ...pendingImport] });
+      }
+    }
+    setPendingImport(null);
+  };
+
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -360,6 +381,12 @@ export function ViewItems() {
         }}
         title={`Eliminar ${deleteData?.type === "item" ? "Objeto" : "Tabla"}`}
         message="¿Estás seguro de que quieres eliminar esto? Esta acción no se puede deshacer."
+      />
+      <ImportModal
+        isOpen={!!pendingImport}
+        onClose={() => setPendingImport(null)}
+        onMerge={() => confirmImport("merge")}
+        onOverwrite={() => confirmImport("overwrite")}
       />
     </div>
   );

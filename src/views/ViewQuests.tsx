@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "../components/ui/Modal";
 import { Input, Button } from "../components/ui/Input";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
+import { ImportModal } from "../components/ImportModal";
 import { Quest, QuestStatus, QuestDetail } from "../types";
 import { cn, compressImage } from "../lib/utils";
 import { v4 as uuidv4 } from "uuid";
@@ -12,6 +13,7 @@ import { v4 as uuidv4 } from "uuid";
 export function ViewQuests() {
   const { quests } = useStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingImport, setPendingImport] = useState<any>(null);
   const [isQuestModalOpen, setIsQuestModalOpen] = useState(false);
   const [editingQuest, setEditingQuest] = useState<Quest | null>(null);
   const [parentIdForNew, setParentIdForNew] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export function ViewQuests() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(quests));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "misiones_backup.json");
+    downloadAnchorNode.setAttribute("download", "ndms_misiones.json");
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -61,7 +63,7 @@ export function ViewQuests() {
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed) && parsed.every(q => q.title !== undefined)) {
-          store.setState({ quests: parsed });
+          setPendingImport(parsed);
         } else {
           alert("Archivo inválido.");
         }
@@ -73,6 +75,16 @@ export function ViewQuests() {
     e.target.value = '';
   };
 
+  const confirmImport = (mode: "merge" | "overwrite") => {
+    if (!pendingImport) return;
+    if (mode === "overwrite") {
+      store.setState({ quests: pendingImport });
+    } else {
+      store.setState({ quests: [...(store.getState().quests || []), ...pendingImport] });
+    }
+    setPendingImport(null);
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-[#14110f] border-none rounded-none overflow-hidden relative">
       <div className="bg-[#1e1a17] px-4 sm:px-6 py-4 border-b border-[#3a302a] flex justify-between items-center z-20 shadow-md">
@@ -82,10 +94,10 @@ export function ViewQuests() {
         </h2>
         <div className="flex gap-2">
           <Button onClick={handleImportClick} variant="ghost" className="hidden sm:flex border border-[#3a302a]">
-            <Upload size={14} className="mr-1" /> Importar
+            <Download size={14} className="mr-1" /> Importar
           </Button>
           <Button onClick={exportQuests} variant="ghost" className="hidden sm:flex border border-[#3a302a]">
-            <Download size={14} className="mr-1" /> Exportar
+            <Upload size={14} className="mr-1" /> Exportar
           </Button>
           <Button onClick={() => handleAddQuest(null)} className="whitespace-nowrap bg-[#1a1614] border border-[#3a302a] text-[#8b7355] hover:border-[#c1a063] hover:text-[#c1a063]">
             <Plus size={14} className="mr-1" /> Nueva Misión
@@ -175,6 +187,12 @@ export function ViewQuests() {
         }}
         title="Eliminar Misión"
         message="¿Estás seguro de que quieres eliminar esta misión? Si tiene misiones derivadas, estas quedarán huérfanas (como misiones raíz)."
+      />
+      <ImportModal
+        isOpen={!!pendingImport}
+        onClose={() => setPendingImport(null)}
+        onMerge={() => confirmImport("merge")}
+        onOverwrite={() => confirmImport("overwrite")}
       />
     </div>
   );

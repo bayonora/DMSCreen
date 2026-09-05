@@ -125,13 +125,13 @@ class Store {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(stateToExport));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "dm_screen_backup.json");
+    downloadAnchorNode.setAttribute("download", "ndms_datos_completos.json");
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
   }
 
-  importData(jsonString: string) {
+  importData(jsonString: string, mode: "merge" | "overwrite" = "overwrite") {
     try {
       const parsed = JSON.parse(jsonString);
       if (Array.isArray(parsed) || (parsed.players && parsed.npcs && !parsed.uiState)) {
@@ -148,7 +148,26 @@ class Store {
       if (parsed.creatures) {
         parsed.creatures = parsed.creatures.filter((c: any) => !c.isTemp);
       }
-      this.setState(parsed);
+
+      if (mode === "overwrite") {
+        this.setState(parsed);
+      } else {
+        const state = this.getState();
+        this.setState({
+          ...parsed,
+          players: [...(state.players || []), ...(parsed.players || [])],
+          npcs: [...(state.npcs || []), ...(parsed.npcs || [])],
+          creatures: [...(state.creatures || []), ...(parsed.creatures || [])],
+          combatants: [...(state.combatants || []), ...(parsed.combatants || [])],
+          maps: [...(state.maps || []), ...(parsed.maps || [])],
+          locations: [...(state.locations || []), ...(parsed.locations || [])],
+          shops: [...(state.shops || []), ...(parsed.shops || [])],
+          notes: [...(state.notes || []), ...(parsed.notes || [])],
+          customItems: [...(state.customItems || []), ...(parsed.customItems || [])],
+          lootTables: [...(state.lootTables || []), ...(parsed.lootTables || [])],
+          quests: [...(state.quests || []), ...(parsed.quests || [])],
+        });
+      }
       alert("Datos importados correctamente.");
     } catch (e) {
       alert("Error al importar: Archivo no válido.");
