@@ -44,7 +44,25 @@ export type NPC = {
   tags?: CharacterTag[];
 };
 
-export type Character = Player | NPC;
+export type Creature = {
+  isTemp?: boolean;
+  id: string;
+  type: "creature";
+  name: string;
+  race: string;
+  ac: number;
+  hpMax: number;
+  stats: StatBlock;
+  cr: string;
+  skills: string;
+  senses: string;
+  languages: string;
+  specialTraits: string;
+  actions: string;
+  tags?: CharacterTag[];
+};
+
+export type Character = Player | NPC | Creature;
 
 export type StatusEffect = {
   id: string;
@@ -60,7 +78,7 @@ export type Combatant = {
   hpCurrent: number;
   statuses: StatusEffect[];
   isTemp?: boolean;
-  tempData?: NPC;
+  tempData?: NPC | Creature;
 };
 
 export type LocationData = {

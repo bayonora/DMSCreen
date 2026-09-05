@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Player, NPC, Character, Combatant, MapData, LocationData, Shop, ShopItem, Note, CustomItem, LootTable, Quest } from "../types";
+import { Player, NPC, Creature, Character, Combatant, MapData, LocationData, Shop, ShopItem, Note, CustomItem, LootTable, Quest } from "../types";
 import { v4 as uuidv4 } from "uuid";
 
 // We use a custom hook instead of Zustand to keep it simple and directly tied to localStorage events if needed.
@@ -20,6 +20,7 @@ type UIState = {
 type StoreState = {
   players: Player[];
   npcs: NPC[];
+  creatures: Creature[];
   combatants: Combatant[];
   graveyard: Combatant[];
   maps: MapData[];
@@ -35,6 +36,7 @@ type StoreState = {
 const DEFAULT_STATE: StoreState = {
   players: [],
   npcs: [],
+  creatures: [],
   combatants: [],
   graveyard: [],
   maps: [],
@@ -73,7 +75,8 @@ class Store {
         const isGhost = (c: any) => {
            if (c.isTemp && c.tempData) return false;
            return !this.state.players.some((p) => p.id === c.characterId) && 
-                  !this.state.npcs.some((n) => n.id === c.characterId);
+                  !this.state.npcs.some((n) => n.id === c.characterId) &&
+                  !(this.state.creatures || []).some((cr) => cr.id === c.characterId);
         };
         if (this.state.combatants) {
            this.state.combatants = this.state.combatants.filter((c) => !isGhost(c));
@@ -118,7 +121,7 @@ class Store {
   }
 
   exportData() {
-    const stateToExport = { ...this.state, npcs: this.state.npcs.filter((n: any) => !n.isTemp) };
+    const stateToExport = { ...this.state, npcs: this.state.npcs.filter((n: any) => !n.isTemp), creatures: (this.state.creatures || []).filter((c: any) => !c.isTemp) };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(stateToExport));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -141,6 +144,9 @@ class Store {
       }
       if (parsed.npcs) {
         parsed.npcs = parsed.npcs.filter((n: any) => !n.isTemp);
+      }
+      if (parsed.creatures) {
+        parsed.creatures = parsed.creatures.filter((c: any) => !c.isTemp);
       }
       this.setState(parsed);
       alert("Datos importados correctamente.");
@@ -218,9 +224,25 @@ export const actions = {
       graveyard: state.graveyard.filter((c) => c.characterId !== id),
     });
   },
+  addCreature: (c: Omit<Creature, "id" | "type">) => {
+    store.setState({ creatures: [...(store.getState().creatures || []), { ...c, id: uuidv4(), type: "creature" }] });
+  },
+  updateCreature: (id: string, c: Partial<Creature>) => {
+    store.setState({
+      creatures: (store.getState().creatures || []).map((x) => (x.id === id ? { ...x, ...c } : x)),
+    });
+  },
+  deleteCreature: (id: string) => {
+    const state = store.getState();
+    store.setState({ 
+      creatures: (state.creatures || []).filter((x) => x.id !== id),
+      combatants: state.combatants.filter((c) => c.characterId !== id),
+      graveyard: state.graveyard.filter((c) => c.characterId !== id),
+    });
+  },
   getCharacter: (id: string): Character | undefined => {
     const state = store.getState();
-    return state.players.find((p) => p.id === id) || state.npcs.find((n) => n.id === id);
+    return state.players.find((p) => p.id === id) || state.npcs.find((n) => n.id === id) || (state.creatures || []).find((c) => c.id === id);
   },
 
   // Initiative
@@ -239,10 +261,10 @@ export const actions = {
       ].sort((a, b) => b.initiative - a.initiative),
     });
   },
-  addTempCombatant: (npc: Omit<NPC, "id" | "type">, initiative: number) => {
+  addTempCombatant: (npc: Omit<NPC, "id" | "type">, initiative: number, isEnemy: boolean = true) => {
     const state = store.getState();
     const id = uuidv4();
-    const fullNpc: NPC = { ...npc, id, type: "npc" };
+    const fullNpc = { ...npc, id, type: (isEnemy ? "creature" : "npc") as any };
     store.setState({
       combatants: [
         ...state.combatants,

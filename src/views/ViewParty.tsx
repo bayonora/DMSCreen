@@ -9,9 +9,10 @@ import { motion, AnimatePresence } from "motion/react";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 
 export function ViewParty() {
-  const { players, npcs: allNpcs } = useStore();
+  const { players, npcs: allNpcs, creatures: allCreatures } = useStore();
+  const creatures = (allCreatures || []).filter(c => !c.isTemp);
   const npcs = allNpcs.filter(n => !n.isTemp);
-  const [tab, setTab] = useState<"players" | "npcs">("players");
+  const [tab, setTab] = useState<"players" | "npcs" | "creatures">("players");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChar, setEditingChar] = useState<Character | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -29,8 +30,17 @@ export function ViewParty() {
   const handleDuplicate = (c: Character) => {
     if (c.type === "player") {
       actions.addPlayer({ ...c, name: `${c.name} (Copia)` } as Player);
-    } else {
+    } else if (c.type === "npc") {
       actions.addNPC({ ...c, name: `${c.name} (Copia)` } as NPC);
+    } else {
+      actions.addCreature({ ...c, name: `${c.name} (Copia)` } as any);
+    }
+  };
+
+  const handleConvertToCreature = (c: Character) => {
+    if (c.type === "npc") {
+      actions.addCreature({ ...c, name: `${c.name} (Enemigo)` } as any);
+      alert(`${c.name} se ha copiado como Criatura enemiga.`);
     }
   };
 
@@ -41,7 +51,8 @@ export function ViewParty() {
   const confirmDelete = () => {
     if (!deleteId) return;
     if (tab === "players") actions.deletePlayer(deleteId);
-    else actions.deleteNPC(deleteId);
+    else if (tab === "npcs") actions.deleteNPC(deleteId);
+    else actions.deleteCreature(deleteId);
     setDeleteId(null);
   };
 
@@ -54,9 +65,10 @@ export function ViewParty() {
       if (typeof result === "string") {
         try {
           const parsed = JSON.parse(result);
-          if (parsed.players !== undefined || parsed.npcs !== undefined) {
+          if (parsed.players !== undefined || parsed.npcs !== undefined || parsed.creatures !== undefined) {
             if (parsed.players !== undefined) store.setState({ players: parsed.players });
             if (parsed.npcs !== undefined) store.setState({ npcs: parsed.npcs.filter((n: any) => !n.isTemp) });
+            if (parsed.creatures !== undefined) store.setState({ creatures: parsed.creatures.filter((c: any) => !c.isTemp) });
           } else {
              // Maybe they are importing a backup with everything, that's handled by global settings.
              // If they just imported an array here by mistake, we don't know if it's players or npcs.
@@ -72,7 +84,7 @@ export function ViewParty() {
   };
 
   const exportData = () => {
-    const data = { players, npcs };
+    const data = { players, npcs, creatures };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -92,6 +104,9 @@ export function ViewParty() {
           <Button variant={tab === "npcs" ? "primary" : "secondary"} onClick={() => setTab("npcs")} className="whitespace-nowrap">
             NPCs ({npcs.length})
           </Button>
+          <Button variant={tab === "creatures" ? "primary" : "secondary"} onClick={() => setTab("creatures")} className="whitespace-nowrap">
+            Criaturas ({creatures.length})
+          </Button>
         </div>
         <div className="flex gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
           <label className="cursor-pointer px-3 sm:px-4 py-2 bg-[#1a1614] border border-[#3a302a] text-[#8b7355] text-xs uppercase tracking-widest hover:bg-[#2a2420] hover:border-[#c1a063] hover:text-[#c1a063] inline-flex items-center justify-center transition-all shadow-sm rounded-none whitespace-nowrap">
@@ -108,30 +123,26 @@ export function ViewParty() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-        <div className="flex flex-wrap gap-6 items-start justify-center">
-          <AnimatePresence>
-            {tab === "players" && players.map((p) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <StatBlock character={p} onEdit={handleEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} />
-              </motion.div>
-            ))}
-            {tab === "npcs" && npcs.map((n) => (
-              <motion.div
-                key={n.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <StatBlock character={n} onEdit={handleEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} />
-              </motion.div>
-            ))}
+        <div className="w-full">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-wrap gap-6 items-start justify-center w-full"
+            >
+              {tab === "players" && players.map((p) => (
+                  <StatBlock key={p.id} character={p} onEdit={handleEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} />
+              ))}
+              {tab === "npcs" && npcs.map((n) => (
+                  <StatBlock key={n.id} character={n} onEdit={handleEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} onConvertToCreature={handleConvertToCreature} />
+              ))}
+              {tab === "creatures" && creatures.map((c) => (
+                  <StatBlock key={c.id} character={c} onEdit={handleEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} />
+              ))}
+            </motion.div>
           </AnimatePresence>
           
           {tab === "players" && players.length === 0 && (
@@ -139,6 +150,9 @@ export function ViewParty() {
           )}
           {tab === "npcs" && npcs.length === 0 && (
              <p className="text-[#e6e2da] opacity-50 w-full text-center py-10 ">No hay NPCs. Añade uno para empezar.</p>
+          )}
+          {tab === "creatures" && creatures.length === 0 && (
+             <p className="text-[#e6e2da] opacity-50 w-full text-center py-10 ">No hay Criaturas. Añade una para empezar.</p>
           )}
         </div>
       </div>
@@ -160,13 +174,13 @@ export function ViewParty() {
   );
 }
 
-function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen: boolean, onClose: () => void, initialData: Character | null, defaultType: "players" | "npcs" }) {
+function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen: boolean, onClose: () => void, initialData: Character | null, defaultType: "players" | "npcs" | "creatures" }) {
   const isEditing = !!initialData;
-  const [type, setType] = useState<"player" | "npc">(initialData?.type || (defaultType === "players" ? "player" : "npc"));
+  const [type, setType] = useState<"player" | "npc" | "creature">(initialData?.type || (defaultType === "players" ? "player" : defaultType === "npcs" ? "npc" : "creature"));
   
   useEffect(() => {
     if (isOpen) {
-      setType(initialData?.type || (defaultType === "players" ? "player" : "npc"));
+      setType(initialData?.type || (defaultType === "players" ? "player" : defaultType === "npcs" ? "npc" : "creature"));
     }
   }, [isOpen, initialData, defaultType]);
 
@@ -193,7 +207,7 @@ function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen:
       };
       if (isEditing && initialData) actions.updatePlayer(initialData.id, p);
       else actions.addPlayer(p);
-    } else {
+    } else if (type === "npc") {
       const n: Omit<NPC, "id" | "type"> = {
         name: getS("name"),
         race: getS("race"),
@@ -209,6 +223,22 @@ function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen:
       };
       if (isEditing && initialData) actions.updateNPC(initialData.id, n);
       else actions.addNPC(n);
+    } else {
+      const c: Omit<NPC, "id" | "type"> = { // Using NPC type structure as requested
+        name: getS("name"),
+        race: getS("race"),
+        hpMax: getNum("hpMax"),
+        ac: getNum("ac"),
+        cr: getS("cr"),
+        skills: getS("skills"),
+        senses: getS("senses"),
+        languages: getS("languages"),
+        specialTraits: getS("specialTraits"),
+        actions: getS("actions"),
+        stats
+      };
+      if (isEditing && initialData) actions.updateCreature(initialData.id, c as any);
+      else actions.addCreature(c as any);
     }
     onClose();
   };
@@ -220,6 +250,7 @@ function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen:
           <div className="flex gap-2 mb-2">
             <Button type="button" variant={type === "player" ? "primary" : "secondary"} onClick={() => setType("player")} className="flex-1">Player</Button>
             <Button type="button" variant={type === "npc" ? "primary" : "secondary"} onClick={() => setType("npc")} className="flex-1">NPC</Button>
+            <Button type="button" variant={type === "creature" ? "primary" : "secondary"} onClick={() => setType("creature")} className="flex-1">Criatura</Button>
           </div>
         )}
         
@@ -232,7 +263,7 @@ function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen:
               <Input label="Percepción Pasiva" name="passivePerception" type="number" defaultValue={(initialData as Player)?.passivePerception} />
             </>
           )}
-          {type === "npc" && (
+          {(type === "npc" || type === "creature") && (
             <Input label="Desafío (CR)" name="cr" defaultValue={(initialData as NPC)?.cr} />
           )}
           <Input label="HP Máximo" name="hpMax" type="number" required defaultValue={initialData?.hpMax} />
@@ -248,7 +279,7 @@ function CharacterModal({ isOpen, onClose, initialData, defaultType }: { isOpen:
           <Input label="CAR" name="cha" type="number" required defaultValue={initialData?.stats?.CHA || 10} />
         </div>
 
-        {type === "npc" && (
+        {(type === "npc" || type === "creature") && (
           <>
             <Input label="Habilidades" name="skills" defaultValue={(initialData as NPC)?.skills} placeholder="ej. Percepción +2, Sigilo +4" />
             <Input label="Sentidos" name="senses" defaultValue={(initialData as NPC)?.senses} placeholder="ej. Visión en la oscuridad 120 pies, Percepción pasiva 12" />

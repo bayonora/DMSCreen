@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { actions } from "../store/useStore";
 import { Modal } from "./ui/Modal";
 import { Input, Button, Textarea } from "./ui/Input";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Skull, Swords, UserCheck } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { Character, NPC, Player } from "../types";
 import { formatMod, cn } from "../lib/utils";
@@ -14,9 +14,13 @@ interface StatBlockProps {
   onEdit?: (c: Character) => void;
   onDelete?: (id: string) => void;
   onDuplicate?: (c: Character) => void;
+  onConvertToCreature?: (c: Character) => void;
 }
 
-export const StatBlock: React.FC<StatBlockProps> = ({ character, onEdit, onDelete, onDuplicate }) => {
+export const StatBlock: React.FC<StatBlockProps> = ({ character, onEdit, onDelete, onDuplicate, onConvertToCreature }) => {
+
+  const borderColor = character.type === "player" ? "border-l-[#c1a063]" : character.type === "npc" ? "border-l-slate-400" : "border-l-[#8a211b]";
+  const titleColor = character.type === "player" ? "text-[#c1a063]" : character.type === "npc" ? "text-slate-400" : "text-[#8a211b]";
   const isPlayer = character.type === "player";
   const p = character as Player;
   const n = character as NPC;
@@ -66,8 +70,13 @@ export const StatBlock: React.FC<StatBlockProps> = ({ character, onEdit, onDelet
 
 
   return (
-    <div className="bg-[#1e1a17] border border-[#3a302a] border-l-4 border-l-[#c1a063] rounded-sm p-4 text-[#e6e2da] font-serif shadow-lg flex flex-col relative max-w-md w-full">
+    <div className={`bg-[#1e1a17] border border-[#3a302a] border-l-4 ${borderColor} rounded-sm p-4 text-[#e6e2da] font-serif shadow-lg flex flex-col relative max-w-md w-full`}>
       <div className="absolute top-2 right-2 flex gap-1">
+        {character.type === "npc" && onConvertToCreature && (
+          <button onClick={() => onConvertToCreature(character)} className="p-1 text-[#3a302a] hover:text-[#8a211b] transition-colors" title="Convertir a Criatura Enemiga">
+            <Swords size={16} />
+          </button>
+        )}
         {onDuplicate && (
           <button onClick={() => onDuplicate(character)} className="p-1 text-[#3a302a] hover:text-[#c1a063] transition-colors" title="Duplicar">
             <Copy size={16} />
@@ -85,7 +94,11 @@ export const StatBlock: React.FC<StatBlockProps> = ({ character, onEdit, onDelet
         )}
       </div>
 
-      <h1 className="text-2xl font-bold text-[#c1a063] font-sans pr-16">{character.name}</h1>
+      <h1 className={`text-2xl font-bold font-sans pr-24 ${titleColor}`}>
+        {character.type === "creature" && <Skull size={20} className="inline-block mr-2 -mt-1" />}
+        {character.type === "npc" && <UserCheck size={20} className="inline-block mr-2 -mt-1" />}
+        {character.name}
+      </h1>
       <p className="italic text-sm opacity-70">
         {isPlayer ? `${p.race} • ${p.classAndLevel}` : n.race}
       </p>

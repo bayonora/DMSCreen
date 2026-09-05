@@ -83,7 +83,7 @@ export default function App() {
       className="flex flex-col h-screen w-full text-[#e6e2da] overflow-hidden font-sans select-none"
       style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #1a1614 0%, #0f0d0c 100%)', backgroundColor: '#0f0d0c' }}
     >
-      <header className="flex justify-between items-center px-6 py-3 border-b border-[#3a302a] bg-[#161311]">
+      <header className="flex justify-between items-center px-4 sm:px-6 py-3 border-b border-[#3a302a] bg-[#161311]">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 border-2 border-[#c1a063] rotate-45 flex items-center justify-center">
             <span className="-rotate-45 font-bold text-xl text-[#c1a063] font-display">DM</span>

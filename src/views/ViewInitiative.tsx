@@ -3,7 +3,7 @@ import { useStore, actions, store } from "../store/useStore";
 import { Combatant, StatusEffect } from "../types";
 import { Input, Button, Textarea } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
-import { Play, SkipForward, Square, Plus, Shield, Heart, Trash2, Edit2, RotateCcw } from "lucide-react";
+import { Play, SkipForward, Square, Plus, Shield, Heart, Trash2, Edit2, RotateCcw, Skull, UserCheck, User } from "lucide-react";
 import { cn, formatMod } from "../lib/utils";
 import { StatBlock } from "../components/StatBlock";
 import { motion, AnimatePresence } from "motion/react";
@@ -96,7 +96,7 @@ export function ViewInitiative() {
       <div className="flex-1 overflow-y-auto custom-scrollbar">
 
         <div className="flex flex-col">
-          <AnimatePresence>
+          <AnimatePresence mode="popLayout">
             {combatants.map((c, idx) => {
               const char = (c.isTemp && c.tempData) ? c.tempData : actions.getCharacter(c.characterId);
               if (!char) return null;
@@ -105,13 +105,13 @@ export function ViewInitiative() {
               return (
                 <motion.div 
                   layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, x: 20 }}
+                  transition={{ duration: 0.3 }}
                   key={c.id} 
                   className={cn(
-                    "flex items-center px-6 py-4 border-b border-[#2a2420] transition-colors",
+                    "flex items-center px-3 sm:px-6 py-4 border-b border-[#2a2420] transition-colors",
                     isActive ? "bg-[#2a2420] relative shadow-[inset_4px_0_0_#c1a063]" : "hover:bg-[#1e1a17]"
                   )}
                 >
@@ -131,6 +131,9 @@ export function ViewInitiative() {
                           onClick={() => setViewCharModal({ open: true, char })}
                           className={cn("font-bold text-lg text-left truncate transition-colors", isActive ? "text-[#f5f2ed]" : "text-[#f5f2ed] opacity-80", "hover:text-[#c1a063]")}
                         >
+                          {char.type === "player" && <User size={16} className="inline-block mr-2 text-green-600" />}
+                          {char.type === "creature" && <Skull size={16} className="inline-block mr-2 text-[#8a211b]" />}
+                          {char.type === "npc" && <UserCheck size={16} className="inline-block mr-2 text-blue-500" />}
                           {char.name}
                         </button>
                         
@@ -154,25 +157,25 @@ export function ViewInitiative() {
                           </button>
                         </div>
                       </div>
-                      <span className={cn("text-[10px] uppercase font-bold", isActive ? "opacity-100 text-[#c1a063]" : "opacity-30", char.type === "npc" && !isActive ? "text-red-400" : "")}>
-                        {isActive ? "▶ TURNO ACTIVO" : (char.type === "player" ? "Jugador" : "NPC")}
+                      <span className={cn("text-[10px] uppercase font-bold", isActive ? "opacity-100 text-[#c1a063]" : "opacity-30")}>
+                        {isActive ? "▶ TURNO ACTIVO" : (char.type === "player" ? "Jugador" : char.type === "creature" ? "Criatura" : "NPC")}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-6 shrink-0 mt-2 md:mt-0 justify-start">
-                      <div className="w-48 flex flex-col justify-center items-end pr-4">
-                        <div className="flex items-center gap-1 text-sm font-mono mb-1 justify-end w-full">
+                    <div className="flex items-center gap-4 sm:gap-6 shrink-0 mt-3 md:mt-0 justify-between w-full md:w-auto">
+                      <div className="flex-1 md:w-48 flex flex-col justify-center md:items-end md:pr-4">
+                        <div className="flex items-center gap-1 text-sm font-mono mb-1 justify-start md:justify-end w-full">
                             <Heart size={14} className={cn("mr-auto shrink-0", isActive ? "text-red-500" : "text-[#8a211b]")} />
                             <MathInput 
                               value={c.hpCurrent}
                               onValueChange={(val) => actions.updateCombatant(c.id, { hpCurrent: val })}
-                              className="w-20 h-6 p-0 text-right border-none bg-transparent text-[#e6e2da] text-xl font-bold focus:bg-[#3a302a] rounded-sm"
+                              className="w-20 h-6 p-0 md:text-right text-left border-none bg-transparent text-[#e6e2da] text-xl font-bold focus:bg-[#3a302a] rounded-sm"
                             />
                             <span className="opacity-50 text-base select-none shrink-0">/ {char.hpMax}</span>
                         </div>
-                        <div className="w-32 h-1.5 bg-[#1a1614] rounded-full relative overflow-hidden border border-[#3a302a]">
+                        <div className="w-full md:w-32 h-1.5 bg-[#1a1614] rounded-full relative overflow-hidden border border-[#3a302a]">
                           <div 
-                            className={cn("absolute inset-0 transition-all duration-300", char.type === "player" ? "bg-green-600" : "bg-red-800")} 
+                            className={cn("absolute inset-0 transition-all duration-300", char.type === "player" ? "bg-green-600" : char.type === "npc" ? "bg-blue-600" : "bg-red-800")} 
                             style={{ width: `${Math.max(0, Math.min(100, (c.hpCurrent / char.hpMax) * 100))}%` }} 
                           />
                         </div>
@@ -215,19 +218,33 @@ export function ViewInitiative() {
         effect={statusModal.effect}
       />
       <GraveyardModal isOpen={isGraveyardOpen} onClose={() => setIsGraveyardOpen(false)} onViewChar={(char) => setViewCharModal({ open: true, char })} />
-      <Modal isOpen={viewCharModal.open} onClose={() => setViewCharModal({ open: false })} title="Ficha">
-         {viewCharModal.char && (
-           <div className="flex justify-center">
-             <StatBlock character={viewCharModal.char} />
-           </div>
-         )}
-      </Modal>
+      <AnimatePresence>
+        {viewCharModal.open && viewCharModal.char && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" 
+            onClick={() => setViewCharModal({ open: false })}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()} 
+              className="max-w-md w-full max-h-[90vh] overflow-y-auto custom-scrollbar flex justify-center"
+            >
+              <StatBlock character={viewCharModal.char} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
-  const { players, npcs, combatants } = useStore();
+  const { players, npcs, creatures, combatants } = useStore();
   const [mode, setMode] = useState<"existing" | "temp">("existing");
   const [selectedId, setSelectedId] = useState("");
   const [initiative, setInitiative] = useState("");
@@ -235,6 +252,7 @@ function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =
   const [tempName, setTempName] = useState("");
   const [tempHpMax, setTempHpMax] = useState("");
   const [tempAc, setTempAc] = useState("");
+  const [isTempEnemy, setIsTempEnemy] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,7 +279,7 @@ function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =
         specialTraits: "",
         actions: ""
       };
-      actions.addTempCombatant(npc, Number(initiative) || 0);
+      actions.addTempCombatant(npc, Number(initiative) || 0, isTempEnemy);
       
       setTempName("");
       setTempHpMax("");
@@ -273,6 +291,7 @@ function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =
 
   const availablePlayers = players.filter(p => !combatants.some(c => c.characterId === p.id));
   const availableNpcs = npcs.filter(n => !combatants.some(c => c.characterId === n.id));
+  const availableCreatures = (creatures || []).filter(cr => !combatants.some(c => c.characterId === cr.id));
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Añadir a Iniciativa">
@@ -313,8 +332,13 @@ function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =
                   {availableNpcs.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
                 </optgroup>
               )}
+              {availableCreatures.length > 0 && (
+                <optgroup label="Criaturas">
+                  {availableCreatures.map(cr => <option key={cr.id} value={cr.id}>{cr.name}</option>)}
+                </optgroup>
+              )}
             </select>
-            {availablePlayers.length === 0 && availableNpcs.length === 0 && (
+            {availablePlayers.length === 0 && availableNpcs.length === 0 && availableCreatures.length === 0 && (
               <p className="text-xs text-[#8a211b] mt-1">Todos los personajes ya están en la iniciativa.</p>
             )}
           </div>
@@ -324,6 +348,10 @@ function AddCombatantModal({ isOpen, onClose }: { isOpen: boolean, onClose: () =
             <div className="grid grid-cols-2 gap-4">
               <Input label="Vida Máxima (HP)" type="number" value={tempHpMax} onChange={e => setTempHpMax(e.target.value)} required={mode === "temp"} />
               <Input label="Armadura (CA)" type="number" value={tempAc} onChange={e => setTempAc(e.target.value)} required={mode === "temp"} />
+            </div>
+            <div className="flex items-center gap-2 text-sm text-[#e6e2da] mt-2">
+              <input type="checkbox" id="isTempEnemy" checked={isTempEnemy} onChange={(e) => setIsTempEnemy(e.target.checked)} className="w-4 h-4 rounded bg-[#0a0a09] border-[#3a302a] text-[#8a211b] focus:ring-[#8a211b]" />
+              <label htmlFor="isTempEnemy">Es Enemigo (Criatura)</label>
             </div>
           </>
         )}
