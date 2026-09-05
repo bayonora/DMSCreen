@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Info, X, Shield, Map as MapIcon, Package, ScrollText, CheckCircle2, Target, Sword, Calculator, Settings, HelpCircle, ChevronRight, Users, Store, Backpack } from "lucide-react";
+import { Info, X, Shield, Map as MapIcon, Package, ScrollText, CheckCircle2, Target, Sword, Calculator, Settings, HelpCircle, ChevronRight, Users, Store, Backpack, BookOpen } from "lucide-react";
 import { useStore, actions } from "../store/useStore";
 import { Button } from "./ui/Input";
 import { cn } from "../lib/utils";
@@ -73,105 +73,143 @@ export function WelcomeModal() {
 
 const TUTORIAL_SECTIONS = [
   {
-    id: "party",
-    title: "Grupo, NPCs y Criaturas",
-    icon: <Shield size={18} />,
+    id: "initiative",
+    title: "1. Iniciativa y Combate",
+    icon: <Sword size={18} />,
     content: (
       <div className="space-y-4 text-sm text-[#e6e2da] leading-relaxed">
-        <p>Aquí gestionas los actores principales de tu mundo: los jugadores, NPCs recurrentes y un bestiario propio de Criaturas.</p>
+        <p>El tracker de combate es el corazón de la acción, diseñado para ordenar automáticamente los turnos e identificar fácilmente aliados (verde) de enemigos (rojo).</p>
         <ul className="list-disc pl-5 space-y-2 text-[#8b7355]">
-          <li><strong className="text-[#c1a063]">Añadir y Editar:</strong> Crea fichas rápidas con clase/tipo, CA y Vida máxima.</li>
-          <li><strong className="text-[#c1a063]">Criaturas vs NPCs:</strong> Usa la sección de Criaturas para tu bestiario base y NPCs para personajes con nombre.</li>
-          <li><strong className="text-[#c1a063]">A la Iniciativa:</strong> Cualquier actor creado aquí se puede enviar al tracker de combate con un clic (icono de la espada).</li>
+          <li><strong className="text-[#c1a063]">Añadir desde Grupo:</strong> El icono superior te permite traer cualquier Personaje, NPC o Criatura de tu base de datos directamente al combate con su iniciativa tirada.</li>
+          <li><strong className="text-[#c1a063]">Combatientes Temporales ("Al Vuelo"):</strong> Si surge un combate imprevisto (ej. bandidos genéricos), usa la opción 'Temporal' para añadirlos sin que se guarden permanentemente en tu bestiario, manteniendo la base de datos limpia.</li>
+          <li><strong className="text-[#c1a063]">Mecánica de Salud Rápida (¡Truco!):</strong> La casilla de HP soporta matemáticas en vivo. No calcules mentalmente: si un goblin de 30 HP recibe 12 de daño, simplemente haz clic en su salud, escribe <code className="text-[#c1a063] bg-[#14110f] px-1 py-0.5 rounded">-12</code> y pulsa Enter. Se restará solo. Funciona igual con curaciones (<code className="text-[#c1a063] bg-[#14110f] px-1 py-0.5 rounded">+15</code>).</li>
+          <li><strong className="text-[#c1a063]">Estados Alterados:</strong> En el menú de 3 puntos de cada personaje puedes aplicar estados (Cegado, Paralizado...). Se mostrará un icono identificativo para que no te olvides de penalizar sus tiradas.</li>
+          <li><strong className="text-[#c1a063]">El Cementerio:</strong> Cuando la vida llega a 0, puedes mandar al combatiente al cementerio (el botón de la calavera). Quedará guardado en un registro aparte para que puedas consultar sus stats o loot tras el combate, o revivirlo si resulta ser un no-muerto.</li>
         </ul>
       </div>
     )
   },
   {
-    id: "initiative",
-    title: "Iniciativa y Combate",
-    icon: <Sword size={18} />,
+    id: "party",
+    title: "2. Grupo, NPCs y Criaturas",
+    icon: <Shield size={18} />,
     content: (
       <div className="space-y-4 text-sm text-[#e6e2da] leading-relaxed">
-        <p>El corazón de la acción. Un tracker inteligente que ordena automáticamente a los combatientes y separa visualmente aliados de enemigos.</p>
+        <p>Tu base de datos de actores. Todo lo que crees aquí puede mandarse al combate con el icono de la espada en su ficha.</p>
         <div className="bg-[#1e1a17] p-4 border border-[#c1a063]/30 rounded-sm my-2">
-          <h4 className="text-[#c1a063] font-bold mb-2 uppercase tracking-wider text-xs">Mecánica de Daño Rápido</h4>
-          <p>¡No pierdas tiempo calculando mentalmente! En la casilla de vida, escribe operaciones directamente. Por ejemplo, si un goblin tiene 25 HP y recibe 8 de daño, simplemente escribe <code className="text-[#c1a063] bg-[#14110f] px-1 py-0.5 rounded">-8</code> y pulsa Enter.</p>
+          <h4 className="text-[#c1a063] font-bold mb-2 uppercase tracking-wider text-xs">Sub-pestañas:</h4>
+          <ul className="list-disc pl-5 space-y-1 text-[#8b7355]">
+            <li><strong>Jugadores:</strong> Las fichas de los héroes (Clase, Nivel, Percepción Pasiva).</li>
+            <li><strong>NPCs:</strong> Personajes de la trama, tenderos o aliados relevantes (con sus motivaciones y habilidades).</li>
+            <li><strong>Criaturas:</strong> Tu bestiario de monstruos puros, listos para ser carne de cañón.</li>
+          </ul>
         </div>
         <ul className="list-disc pl-5 space-y-2 text-[#8b7355]">
-          <li><strong className="text-[#c1a063]">Combatientes al vuelo:</strong> El botón 'Añadir Personaje/Monstruo' permite crear enemigos rápidos que sólo existirán en este combate (marcados como Temporales). Así tu bestiario principal se mantiene limpio.</li>
-          <li><strong className="text-[#c1a063]">Estados Alterados:</strong> Añade condiciones temporales (Cegado, Derribado) desde el menú de opciones (3 puntos) de cada combatiente.</li>
-          <li><strong className="text-[#c1a063]">El Cementerio:</strong> Cuando la vida llega a 0, puedes mandar al combatiente al cementerio. Quedará registrado por si necesitas consultar el botín o revivirlo (icono de calavera).</li>
+          <li><strong className="text-[#c1a063]">Fichas de Estadísticas:</strong> Cada actor guarda su AC, Vida Máxima y Atributos (FUE, DEX...). Al abrir la ficha completa verás su bloque de estadísticas estilo D&D oficial.</li>
+          <li><strong className="text-[#c1a063]">Exportación/Importación Modular:</strong> Cada sub-pestaña tiene su icono de guardar/subir. Puedes descargar un JSON sólo con tus Criaturas y pasárselo a otro máster sin destriparle quiénes son tus NPCs importantes. El sistema permite elegir si <em>Fusionar</em> (añadir a lo que ya tienes) o <em>Sobrescribir</em>.</li>
         </ul>
       </div>
     )
   },
   {
     id: "maps",
-    title: "Mapas y Lugares",
+    title: "3. Mapas y Lugares",
     icon: <MapIcon size={18} />,
     content: (
       <div className="space-y-4 text-sm text-[#e6e2da] leading-relaxed">
-        <p>Construye tu mundo de forma visual y organizada.</p>
+        <p>Construye tu mundo visualmente y ten a mano el lore geopolítico.</p>
+        <div className="bg-[#1e1a17] p-4 border border-[#c1a063]/30 rounded-sm my-2">
+          <h4 className="text-[#c1a063] font-bold mb-2 uppercase tracking-wider text-xs">Sub-pestañas:</h4>
+          <ul className="list-disc pl-5 space-y-1 text-[#8b7355]">
+            <li><strong>Mapas Interactivos:</strong> Sube URLs de mapas, ábrelos a pantalla completa y haz zoom o arrástralos como en un VTT virtual. Muy útil para mostrar planos en una TV.</li>
+            <li><strong>Lugares:</strong> Una mini-wiki de localizaciones. Ciudades, tabernas, o mazmorras con su descripción y región a la que pertenecen.</li>
+          </ul>
+        </div>
         <ul className="list-disc pl-5 space-y-2 text-[#8b7355]">
-          <li><strong className="text-[#c1a063]">Mapas Interactivos:</strong> Ábrelos a pantalla completa para hacer zoom y desplazarte libremente. Ideal para mostrar planos en una pantalla secundaria a tus jugadores.</li>
-          <li><strong className="text-[#c1a063]">Lugares (Wiki):</strong> Tarjetas dedicadas a localizaciones importantes con su nombre, región, imagen y una descripción detallada.</li>
-          <li><strong className="text-[#c1a063]">Compartir Mapas:</strong> Al usar la función 'Importar' de esta pestaña, los nuevos mapas y lugares se <em>fusionan</em> con los tuyos (añadiéndose), en lugar de borrar tu contenido previo. ¡Perfecto para pasarse packs de mapas entre Másters!</li>
+          <li><strong className="text-[#c1a063]">Visualizador Inmersivo:</strong> Al pulsar un mapa, el entorno se oscurece y elimina las distracciones para que puedas orientarte a la perfección.</li>
         </ul>
       </div>
     )
   },
   {
     id: "quests",
-    title: "Misiones y Notas",
+    title: "4. Misiones (Quest Tracker)",
     icon: <Target size={18} />,
     content: (
       <div className="space-y-4 text-sm text-[#e6e2da] leading-relaxed">
-        <p>Estructura tramas complejas y mantén tu lore organizado con el sistema de jerarquías.</p>
+        <p>Un sistema de ramificación (árbol jerárquico) para tramas complejas, evitando las típicas listas interminables.</p>
         <ul className="list-disc pl-5 space-y-2 text-[#8b7355]">
-          <li><strong className="text-[#c1a063]">Árbol de Misiones:</strong> Crea una 'Misión Raíz' y usa el botón 'Ramificar' (flechas) para crear sub-misiones. Así generas árboles visuales de la trama.</li>
-          <li><strong className="text-[#c1a063]">Estados y Pistas:</strong> Haz clic en el icono circular para cambiar el estado (Activa, Completada, Fallada). Usa el icono '+' para añadir recompensas, objetivos o pistas dentro de cada nodo.</li>
-          <li><strong className="text-[#c1a063]">Diario de Notas:</strong> Un espacio Markdown enriquecido para escribir tu lore. Usa colores para categorizar y dar personalidad a tus libretas.</li>
+          <li><strong className="text-[#c1a063]">Misión Raíz vs Submisión:</strong> Creas primero las tramas principales. Usando el icono de las flechas divergentes ("Ramificar") puedes crear misiones derivadas vinculadas visualmente a la principal (ej. Misión: Entrar al castillo &gt; Submisión: Conseguir la llave del pozo).</li>
+          <li><strong className="text-[#c1a063]">Estados Rotativos:</strong> El icono circular a la izquierda del título te permite hacer clic para ciclar el estado de la misión: <span className="text-yellow-500">Pendiente</span> &rarr; <span className="text-green-500">Completada</span> &rarr; <span className="text-red-500">Fallida</span>.</li>
+          <li><strong className="text-[#c1a063]">Pistas y Recompensas (+):</strong> Con el botón de suma puedes añadir notas internas a un nodo (una pista sobre el asesino, el tesoro que encontrarán...).</li>
+          <li><strong className="text-[#c1a063]">Modo Lectura:</strong> Hacer clic en el propio título o imagen de la misión la abrirá en un modal grande, limpio, perfecto para leerle el texto introductorio a tus jugadores sin forzar la vista.</li>
+        </ul>
+      </div>
+    )
+  },
+  {
+    id: "notes",
+    title: "5. Notas (Diario del DM)",
+    icon: <BookOpen size={18} />,
+    content: (
+      <div className="space-y-4 text-sm text-[#e6e2da] leading-relaxed">
+        <p>Tu libreta de diseño de campaña con soporte Markdown avanzado.</p>
+        <ul className="list-disc pl-5 space-y-2 text-[#8b7355]">
+          <li><strong className="text-[#c1a063]">Formato Markdown:</strong> Escribe texto enriquerico rápidamente usando símbolos estándar: <code className="text-[#c1a063]"># Título</code>, <code className="text-[#c1a063]">**Negrita**</code>, <code className="text-[#c1a063]">- Lista</code>. Se renderizará perfectamente al visualizar la nota.</li>
+          <li><strong className="text-[#c1a063]">Codificación por Color:</strong> A cada nota puedes asignarle una textura/color visual (Rojo para combates peligrosos, Azul para Lore antiguo...). Así reconoces tus archivos de un vistazo.</li>
         </ul>
       </div>
     )
   },
   {
     id: "shops",
-    title: "Objetos y Tiendas",
-    icon: <Package size={18} />,
+    title: "6. Tiendas",
+    icon: <Store size={18} />,
     content: (
       <div className="space-y-4 text-sm text-[#e6e2da] leading-relaxed">
-        <p>Un compendio total para la economía y las recompensas del grupo.</p>
+        <p>Tenderos, mercancías y catálogos de compraventa a tu alcance.</p>
         <ul className="list-disc pl-5 space-y-2 text-[#8b7355]">
-          <li><strong className="text-[#c1a063]">Objetos Personalizados:</strong> Crea tu propio arsenal de items mágicos con rarezas, valores e imágenes, guardándolos como plantillas para el futuro.</li>
-          <li><strong className="text-[#c1a063]">Tablas de Botín:</strong> Define recompensas y su probabilidad (peso). Pulsa el botón del 'Dado' y la app generará un resultado aleatorio equilibrado basándose en los pesos que pusiste.</li>
-          <li><strong className="text-[#c1a063]">Tiendas de NPCs:</strong> Crea tenderos, añádeles oro y asígnales directamente objetos desde tu base de datos de Objetos Personalizados para controlar su stock.</li>
+          <li><strong className="text-[#c1a063]">Creación de Tiendas:</strong> Añade un mercader con su nombre, el nombre de su establecimiento y una imagen de perfil. Al hacer clic sobre él, entrarás a su inventario.</li>
+          <li><strong className="text-[#c1a063]">Inventario Personalizado:</strong> Dentro de cada tienda, puedes añadir los objetos que tiene a la venta escribiendo su nombre, precio (ej: 50 gp), descripción e incluso subiendo una imagen para mostrársela a tus jugadores.</li>
+          <li><strong className="text-[#c1a063]">Control Visual y Ocultación:</strong> Los objetos de la tienda se presentan en forma de tarjetas o listas limpias. Si necesitas ocultar temporalmente un ítem porque se ha agotado (o porque el mercader aún no se lo quiere mostrar a los jugadores), puedes usar el icono del <strong>Ojo</strong> para ocultarlo sin tener que borrarlo.</li>
         </ul>
       </div>
     )
   },
   {
-    id: "general",
-    title: "Importar, Exportar y Sistema",
+    id: "items",
+    title: "7. Objetos y Tablas de Botín",
+    icon: <Package size={18} />,
+    content: (
+      <div className="space-y-4 text-sm text-[#e6e2da] leading-relaxed">
+        <p>Tu arsenal personal y el sistema de botín aleatorio.</p>
+        <div className="bg-[#1e1a17] p-4 border border-[#c1a063]/30 rounded-sm my-2">
+          <h4 className="text-[#c1a063] font-bold mb-2 uppercase tracking-wider text-xs">Sub-pestañas:</h4>
+          <ul className="list-disc pl-5 space-y-1 text-[#8b7355]">
+            <li><strong>Objetos Únicos:</strong> Crea cartas detalladas de objetos importantes. Añádeles un nombre, descripción, valor (precio) y una imagen representativa para visualizarlos como un inventario de gran calidad.</li>
+            <li><strong>Tablas de Botín:</strong> El sistema perfecto para generar loot rápido tras un combate.</li>
+          </ul>
+        </div>
+        <ul className="list-disc pl-5 space-y-2 text-[#8b7355]">
+          <li><strong className="text-[#c1a063]">Creación de Tablas:</strong> Crea una tabla (ej. "Tesoro de Dragón"). El editor de texto te permite escribir un objeto o recompensa por línea. Si quieres que algo tenga más probabilidad de salir, simplemente repítelo en varias líneas.</li>
+          <li><strong className="text-[#c1a063]">Tirar el Dado:</strong> Al ver tus tablas de botín, haz clic en el icono del dado que aparece en la cabecera de cada una de ellas. La herramienta tirará un dado virtual basado en el total de líneas y extraerá instantáneamente tu recompensa sin necesidad de dados porcentuales.</li>
+        </ul>
+      </div>
+    )
+  },
+  {
+    id: "global",
+    title: "8. Sistema Global y Herramientas",
     icon: <Settings size={18} />,
     content: (
       <div className="space-y-4 text-sm text-[#e6e2da] leading-relaxed">
-        <p>Tu información siempre es tuya, privada y está blindada contra accidentes.</p>
+        <p>Herramientas omnipresentes para no tener que salir nunca de la página de Rol.</p>
         <ul className="list-disc pl-5 space-y-2 text-[#8b7355]">
-          <li><strong className="text-[#c1a063]">Autoguardado Local:</strong> Funciona 100% offline. Tus partidas no dependen de ningún servidor.</li>
-          <li><strong className="text-[#c1a063]">Copia de Seguridad Global (Engranaje):</strong> Desde el botón del engranaje situado en la esquina superior derecha de la pantalla principal, la 'Exportación Total' genera un <code>.json</code> con TODO (Misiones, Objetos, Combatientes, Mapas...). El importador global es inteligente y bloqueará cualquier archivo incompleto para evitar que sobreescribas tu campaña por error.</li>
-          <li><strong className="text-[#c1a063]">Exportación Modular:</strong> Todas las pestañas individuales tienen sus propios iconos de exportar/importar en la esquina superior derecha. Sirven para compartir sólo esa sección (ej: "Quiero pasarte un archivo de Objetos, pero sin hacerte spoilers de mis Misiones").</li>
+          <li><strong className="text-[#c1a063]">Autoguardado 100% Offline:</strong> No hay servidores, todo se guarda en tu navegador automáticamente, a prueba de cortes de internet.</li>
+          <li><strong className="text-[#c1a063]">Buscador Global (La lupa):</strong> En la barra superior. Si tus jugadores mencionan "El Zafiro Negro", escríbelo ahí y la app buscará en Notas, Objetos, NPCs y Mapas a la vez.</li>
+          <li><strong className="text-[#c1a063]">Calculadora Integrada:</strong> Accesible desde cualquier lugar en el icono lateral superior. No ensucies la mesa con hojas en sucio, haz sumas rápidas o restas de daño directamente.</li>
+          <li><strong className="text-[#c1a063]">Exportación Total (Engranaje):</strong> Genera tu <code>ndms_datos_completos.json</code> para guardar un backup de absolutamente TODO, pasarlo a otro PC, o restaurar la partida tras formatear el ordenador. Al importar, podrás elegir Fusionar (juntar datos) o Sobrescribir (borrar todo y dejar solo lo nuevo).</li>
         </ul>
-        <div className="bg-[#1e1a17] p-4 border border-[#c1a063]/30 rounded-sm mt-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <div className="p-2 bg-[#14110f] rounded-full border border-[#3a302a] shrink-0">
-            <Calculator size={20} className="text-[#c1a063]" />
-          </div>
-          <div>
-            <h4 className="text-[#c1a063] font-bold uppercase tracking-wider text-xs">Calculadora y Dados</h4>
-            <p className="text-xs text-[#8b7355] mt-1">Recuerda que pulsando el icono del dado en el menú lateral principal, invocas en cualquier momento la calculadora universal y el tirador de dados.</p>
-          </div>
-        </div>
       </div>
     )
   },
