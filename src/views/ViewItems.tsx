@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useRef } from "react";
 import { useStore, actions, store } from "../store/useStore";
-import { Plus, X, Download, Upload, Image as ImageIcon, Hexagon } from "lucide-react";
+import { Plus, X, Download, Upload, Image as ImageIcon, Hexagon, ChevronDown, ChevronUp } from "lucide-react";
 import { CustomItem, LootTable } from "../types";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import { cn, compressImage } from "../lib/utils";
@@ -17,6 +17,9 @@ export function ViewItems() {
   const [rollingState, setRollingState] = useState<'idle' | 'rolling' | 'result'>('idle');
   const [currentRollNumber, setCurrentRollNumber] = useState<number>(1);
   const [finalItem, setFinalItem] = useState<{ index: number, text: string } | null>(null);
+  const [collapsedTables, setCollapsedTables] = useState<Record<string, boolean>>({});
+
+  const toggleCollapse = (id: string) => setCollapsedTables(prev => ({...prev, [id]: !prev[id]}));
 
   const startLootRoll = (table: LootTable) => {
     if (!table.items || table.items.length === 0) return;
@@ -53,12 +56,11 @@ export function ViewItems() {
     e.preventDefault();
     if (!editingTable || !editingTable.name) return;
     
-    // Parse text into lines, max 100
+    // Parse text into lines (unlimited)
     const lines = editingTable.rawText
       .split("\n")
       .map(l => l.trim())
-      .filter(l => l.length > 0)
-      .slice(0, 100);
+      .filter(l => l.length > 0);
       
     const tableData: Omit<LootTable, "id"> | LootTable = {
       ...(editingTable.id ? { id: editingTable.id } : {}),
@@ -192,11 +194,18 @@ export function ViewItems() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {(lootTables || []).map((table) => (
+          <div className="flex flex-col gap-6">
+            {(lootTables || []).map((table) => {
+              const isCollapsed = collapsedTables[table.id] || false;
+              return (
               <div key={table.id} className="bg-[#161311] border border-[#3a302a] p-4 flex flex-col shadow-lg">
-                <div className="flex justify-between items-center mb-4 border-b border-[#3a302a] pb-2">
-                  <h3 className="text-lg text-[#c1a063] font-bold">{table.name}</h3>
+                <div className={cn("flex justify-between items-center border-[#3a302a]", !isCollapsed ? "mb-4 border-b pb-2" : "")}>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => toggleCollapse(table.id)} className="text-[#8b7355] hover:text-white transition-colors">
+                      {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                    </button>
+                    <h3 className="text-lg text-[#c1a063] font-bold">{table.name} <span className="text-sm font-normal text-[#8b7355]">({table.items.length})</span></h3>
+                  </div>
                   <div className="flex space-x-3 items-center">
                     <button onClick={() => startLootRoll(table)} className="text-sm text-[#c1a063] hover:text-[#dfba76] uppercase tracking-wider flex items-center gap-1 font-bold" title={`Tirar d${table.items.length}`}>
                       <Hexagon size={16} /> Tirar
@@ -206,6 +215,7 @@ export function ViewItems() {
                     <button onClick={() => setDeleteData({ type: "table", id: table.id })} className="text-sm text-red-500 hover:text-red-400 uppercase tracking-wider">Borrar</button>
                   </div>
                 </div>
+                {!isCollapsed && (
                 <div className="max-h-64 overflow-y-auto pr-2 custom-scrollbar">
                   <table className="w-full text-sm text-left">
                     <tbody>
@@ -218,8 +228,9 @@ export function ViewItems() {
                     </tbody>
                   </table>
                 </div>
+                )}
               </div>
-            ))}
+            )})}
             {(!lootTables || lootTables.length === 0) && (
               <div className="col-span-full flex flex-col items-center justify-center h-64 text-[#8b7355] border-2 border-dashed border-[#3a302a]">
                 <p>No hay tablas de botín configuradas.</p>
@@ -280,14 +291,14 @@ export function ViewItems() {
             <h2 className="text-xl text-[#c1a063] tracking-widest uppercase mb-2 font-light">
               {editingTable.id ? "Editar Tabla de Botín" : "Nueva Tabla de Botín"}
             </h2>
-            <p className="text-xs text-gray-400 mb-6 border-b border-[#3a302a] pb-2">Cada línea de texto será un objeto numerado (Máximo 100 líneas).</p>
+            <p className="text-xs text-gray-400 mb-6 border-b border-[#3a302a] pb-2">Cada línea de texto será un posible resultado (Sin límite de líneas).</p>
 
             <label className="block text-xs uppercase tracking-widest text-[#8b7355] mb-1">Nombre de la Categoría/Tabla</label>
             <input type="text" placeholder="Ej. Tesoro de Dragón Adulto (CR 11-16)" value={editingTable.name} onChange={(e) => setEditingTable({ ...editingTable, name: e.target.value })} className="w-full bg-black/50 border border-[#3a302a] p-2 text-white mb-4 focus:border-[#c1a063] outline-none" required />
 
             <label className="block text-xs uppercase tracking-widest text-[#8b7355] mb-1 flex justify-between">
               <span>Objetos (1 por línea)</span>
-              <span className="text-gray-500">{editingTable.rawText.split('\n').filter(l=>l.trim()).length} / 100</span>
+              <span className="text-gray-500">{editingTable.rawText.split('\n').filter(l=>l.trim()).length} entradas</span>
             </label>
             <textarea 
               value={editingTable.rawText} 
