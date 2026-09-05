@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Info, X, Shield, Map as MapIcon, Package, ScrollText, CheckCircle2, Target, Sword, Calculator, Settings, HelpCircle, ChevronRight } from "lucide-react";
+import { Info, X, Shield, Map as MapIcon, Package, ScrollText, CheckCircle2, Target, Sword, Calculator, Settings, HelpCircle, ChevronRight, Users, Store, Backpack } from "lucide-react";
 import { useStore, actions } from "../store/useStore";
 import { Button } from "./ui/Input";
 import { cn } from "../lib/utils";
@@ -21,15 +21,18 @@ export function WelcomeModal() {
       <div className="bg-[#1e1a17] border border-[#c1a063] rounded-lg max-w-lg w-full p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-300">
         <h2 className="text-2xl font-bold tracking-widest uppercase text-[#c1a063] mb-4 flex items-center gap-3 border-b border-[#3a302a] pb-4">
           <Shield className="text-[#8b7355] shrink-0" size={28} />
-          Bienvenido a la DM Screen
+          Bienvenid@ a Nellie's DM Screen
         </h2>
         
         <p className="text-[#e6e2da] text-sm leading-relaxed mb-6 mt-4">
-          Esta herramienta está diseñada para que tengas todo el control de tu campaña de rol en un solo lugar de forma ágil y oscura.
-          Aquí tienes un vistazo rápido de su poder:
+          Esta herramienta está diseñada para que tengas todo el control de tu campaña de rol en un solo lugar de forma ágil y ordenada.
         </p>
 
-        <ul className="space-y-4 text-sm text-[#e6e2da] mb-8">
+        <ul className="space-y-4 text-sm text-[#e6e2da] mb-8 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
+          <li className="flex items-start gap-3 bg-[#14110f] p-3 border border-[#3a302a] rounded-sm">
+            <Users size={20} className="text-[#c1a063] shrink-0 mt-0.5" />
+            <span><strong>Grupo y Actores:</strong> Gestiona a tus jugadores, NPCs relevantes y tu propio bestiario de criaturas, todos listos para saltar a la iniciativa con un clic.</span>
+          </li>
           <li className="flex items-start gap-3 bg-[#14110f] p-3 border border-[#3a302a] rounded-sm">
             <Sword size={20} className="text-[#c1a063] shrink-0 mt-0.5" />
             <span><strong>Iniciativa Dinámica:</strong> Gestiona combates con cálculo automático. ¡Tip pro: Puedes escribir sumas o restas (ej. <code className="text-[#c1a063] font-bold">-15</code>) directamente en la casilla de vida!</span>
@@ -39,8 +42,12 @@ export function WelcomeModal() {
             <span><strong>Misiones (Árbol Dinámico):</strong> Estructura tus tramas de izquierda a derecha. Añade derivadas y detalles ocultos a cada nodo.</span>
           </li>
           <li className="flex items-start gap-3 bg-[#14110f] p-3 border border-[#3a302a] rounded-sm">
-            <MapIcon size={20} className="text-[#c1a063] shrink-0 mt-0.5" />
-            <span><strong>Mundo Visual:</strong> Sube tus propios mapas y lugares, visualízalos a pantalla completa con zoom interactivo y enriquece tu mundo.</span>
+            <Store size={20} className="text-[#c1a063] shrink-0 mt-0.5" />
+            <span><strong>Tiendas:</strong> Crea mercaderes, dales un presupuesto de oro y adminístrales un stock de objetos para que tus jugadores puedan comerciar fácilmente.</span>
+          </li>
+          <li className="flex items-start gap-3 bg-[#14110f] p-3 border border-[#3a302a] rounded-sm">
+            <Backpack size={20} className="text-[#c1a063] shrink-0 mt-0.5" />
+            <span><strong>Objetos y Recompensas:</strong> Diseña items personalizados mágicos y crea Tablas de Botín para generar recompensas aleatorias equilibradas al vuelo.</span>
           </li>
         </ul>
 
