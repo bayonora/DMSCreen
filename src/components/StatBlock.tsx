@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { actions } from "../store/useStore";
 import { Modal } from "./ui/Modal";
 import { Input, Button, Textarea } from "./ui/Input";
-import { Plus, X, Skull, Swords, UserCheck } from "lucide-react";
+import { Plus, Skull, Swords, UserCheck } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { Character, NPC, Player } from "../types";
-import { formatMod, cn } from "../lib/utils";
+import { formatMod } from "../lib/utils";
 import { Copy, Edit2, Trash2 } from "lucide-react";
 
 interface StatBlockProps {

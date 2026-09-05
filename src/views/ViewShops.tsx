@@ -149,6 +149,12 @@ export function ViewShops() {
         title="Eliminar Tienda"
         message="¿Estás seguro de que quieres eliminar esta tienda permanentemente?"
       />
+      <ImportModal
+        isOpen={!!pendingImport}
+        onClose={() => setPendingImport(null)}
+        onMerge={() => confirmImport("merge")}
+        onOverwrite={() => confirmImport("overwrite")}
+      />
     </div>
   );
 }

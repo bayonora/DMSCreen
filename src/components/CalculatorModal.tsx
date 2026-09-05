@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Modal } from './ui/Modal';
 
 export function CalculatorModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {

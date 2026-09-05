@@ -136,7 +136,7 @@ export function ViewMaps() {
               doubleClick={{ disabled: true }}
               panning={{ excluded: ['zoom-controls'] }}
             >
-              {({ zoomIn, zoomOut, resetTransform, setTransform, state, instance }) => (
+              {({ zoomIn, zoomOut, resetTransform }) => (
                 <>
                   <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
                     <img src={selectedMap.image} alt={selectedMap.name} className="pointer-events-none" />

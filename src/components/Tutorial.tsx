@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Info, X, Shield, Map as MapIcon, Package, ScrollText, CheckCircle2, Target, Sword, Calculator, Settings, HelpCircle, ChevronRight, Users, Store, Backpack, BookOpen } from "lucide-react";
+import { useState } from "react";
+import { X, Shield, Map as MapIcon, Package, ScrollText, Target, Sword, Settings, HelpCircle, ChevronRight, Users, Store, Backpack, BookOpen } from "lucide-react";
 import { useStore, actions } from "../store/useStore";
 import { Button } from "./ui/Input";
 import { cn } from "../lib/utils";

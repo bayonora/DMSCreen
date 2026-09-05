@@ -1,17 +1,17 @@
 import React, { useState } from "react";
-import { useStore, actions, store } from "../store/useStore";
-import { Combatant, StatusEffect } from "../types";
+import { useStore, actions } from "../store/useStore";
+import { StatusEffect } from "../types";
 import { Input, Button, Textarea } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
-import { Play, SkipForward, Square, Plus, Shield, Heart, Trash2, Edit2, RotateCcw, Skull, UserCheck, User } from "lucide-react";
-import { cn, formatMod } from "../lib/utils";
+import { Play, SkipForward, Square, Plus, Shield, Heart, Trash2, RotateCcw, Skull, UserCheck, User } from "lucide-react";
+import { cn } from "../lib/utils";
 import { StatBlock } from "../components/StatBlock";
 import { motion, AnimatePresence } from "motion/react";
 import { MathInput } from "../components/MathInput";
 import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 
 export function ViewInitiative() {
-  const { combatants, graveyard, players, npcs, uiState } = useStore();
+  const { combatants, graveyard, uiState } = useStore();
   
   const isCombatActive = uiState?.combatActive || false;
   const activeCombatantId = uiState?.activeCombatantId || null;
