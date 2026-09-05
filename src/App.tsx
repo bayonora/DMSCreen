@@ -19,6 +19,7 @@ import { CalculatorModal } from "./components/CalculatorModal";
 import { WelcomeModal, FullTutorialModal } from "./components/Tutorial";
 import { GlobalSearch } from "./components/GlobalSearch";
 import { Info } from "lucide-react";
+import { TitleTorch } from "./components/TitleTorch";
 
 type Tab = "party" | "initiative" | "quests" | "maps" | "shops" | "notes" | "items";
 
@@ -85,9 +86,10 @@ export default function App() {
     >
       <header className="flex justify-between items-center px-4 sm:px-6 py-3 border-b border-[#3a302a] bg-[#161311]">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 border-2 border-[#c1a063] rotate-45 flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-[#c1a063] rotate-45 flex items-center justify-center shrink-0">
             <span className="-rotate-45 font-bold text-xl text-[#c1a063] font-display">DM</span>
           </div>
+          <TitleTorch />
         </div>
         <div className="flex-1 flex justify-center px-4 max-w-lg hidden sm:flex"><GlobalSearch onNavigate={setActiveTab} /></div>
         <div className="flex items-center space-x-2">
