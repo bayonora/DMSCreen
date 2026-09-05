@@ -19,9 +19,12 @@ export function WelcomeModal() {
   return (
     <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-[#1e1a17] border border-[#c1a063] rounded-lg max-w-lg w-full p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-300">
-        <h2 className="text-2xl font-bold tracking-widest uppercase text-[#c1a063] mb-4 flex items-center gap-3 border-b border-[#3a302a] pb-4">
-          <Shield className="text-[#8b7355] shrink-0" size={28} />
-          Bienvenid@ a Nellie's DM Screen
+        <h2 className="text-2xl font-bold tracking-widest uppercase text-[#c1a063] mb-4 flex items-center gap-3 border-b border-[#3a302a] pb-4 leading-tight">
+          <Shield className="text-[#8b7355] shrink-0" size={32} />
+          <div>
+            Bienvenid@ a<br />
+            Nellie's DM Screen
+          </div>
         </h2>
         
         <p className="text-[#e6e2da] text-sm leading-relaxed mb-6 mt-4">
@@ -43,7 +46,7 @@ export function WelcomeModal() {
           </li>
           <li className="flex items-start gap-3 bg-[#14110f] p-3 border border-[#3a302a] rounded-sm">
             <Store size={20} className="text-[#c1a063] shrink-0 mt-0.5" />
-            <span><strong>Tiendas:</strong> Crea mercaderes, dales un presupuesto de oro y adminístrales un stock de objetos para que tus jugadores puedan comerciar fácilmente.</span>
+            <span><strong>Tiendas:</strong> Crea tiendas y mercaderes, y administra catálogos de objetos con sus descripciones y precios para tener siempre a mano lo que pueden comprar tus jugadores.</span>
           </li>
           <li className="flex items-start gap-3 bg-[#14110f] p-3 border border-[#3a302a] rounded-sm">
             <Backpack size={20} className="text-[#c1a063] shrink-0 mt-0.5" />
